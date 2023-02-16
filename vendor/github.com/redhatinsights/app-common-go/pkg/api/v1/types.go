@@ -114,6 +114,9 @@ type AppConfig struct {
 	// traffic.
 	PublicPort *int `json:"publicPort,omitempty"`
 
+	// Defines the port CA path
+	TlsCAPath *string `json:"tlsCAPath,omitempty"`
+
 	// Deprecated: Use 'publicPort' instead.
 	WebPort *int `json:"webPort,omitempty"`
 }
@@ -416,6 +419,9 @@ type BrokerConfig struct {
 
 	// Sasl corresponds to the JSON schema field "sasl".
 	Sasl *KafkaSASLConfig `json:"sasl,omitempty"`
+
+	// SecurityProtocol corresponds to the JSON schema field "securityProtocol".
+	SecurityProtocol *string `json:"securityProtocol,omitempty"`
 }
 
 // UnmarshalJSON implements json.Unmarshaler.
@@ -500,6 +506,9 @@ type DependencyEndpoint struct {
 
 	// The port of the dependent service.
 	Port int `json:"port"`
+
+	// The TLS port of the dependent service.
+	TlsPort *int `json:"tlsPort,omitempty"`
 }
 
 // Deployment Metadata
@@ -563,7 +572,7 @@ type KafkaSASLConfig struct {
 	// SaslMechanism corresponds to the JSON schema field "saslMechanism".
 	SaslMechanism *string `json:"saslMechanism,omitempty"`
 
-	// SecurityProtocol corresponds to the JSON schema field "securityProtocol".
+	// Deprecated: Use the top level securityProtocol field instead
 	SecurityProtocol *string `json:"securityProtocol,omitempty"`
 
 	// Username corresponds to the JSON schema field "username".
@@ -631,6 +640,9 @@ type PrivateDependencyEndpoint struct {
 
 	// The port of the dependent service.
 	Port int `json:"port"`
+
+	// The TLS port of the dependent service.
+	TlsPort *int `json:"tlsPort,omitempty"`
 }
 
 // Topic Configuration
