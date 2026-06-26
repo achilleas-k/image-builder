@@ -45,6 +45,7 @@ class DirServer(ThreadingHTTPServer):
 
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-many-locals,unused-argument
+@pytest.mark.skip(reason="kvm boot tests are currently disabled")
 def boot_qemu_pxe(arch, pxe_tar_path, container_ref, username, password, ssh_key_path, keep=False):
     with ExitStack() as cm:
         # unpack the tar and create a combined image

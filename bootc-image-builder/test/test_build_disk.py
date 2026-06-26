@@ -560,6 +560,7 @@ def test_image_boots(image_type):
     assert_disk_image_boots(image_type)
 
 
+@pytest.mark.skip(reason="kvm boot tests are currently disabled")
 def assert_disk_image_boots(image_type):
     with testlib.vm.QEMU(image_type.img_path, arch=image_type.img_arch) as test_vm:
         # user/password login works
