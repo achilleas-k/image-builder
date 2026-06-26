@@ -431,6 +431,7 @@ def test_wait_ssh_ready_sleeps_no_connection(mocked_sleep):
 def test_wait_ssh_ready_sleeps_wrong_reply():
     free_port = testlib.vm.get_free_port()
     with contextlib.ExitStack() as cm:
+        print("not-ssh")
         with sp.Popen(
             f"echo not-ssh | nc -vv -l {free_port}",
             shell=True,
@@ -440,10 +441,14 @@ def test_wait_ssh_ready_sleeps_wrong_reply():
         ) as p:
             cm.callback(p.kill)
             # wait for nc to be ready
+            print("waiting")
             while True:
                 # netcat tranditional uses "listening", others "Listening"
                 # so just omit the first char
-                if "istening " in p.stdout.readline():
+                line = p.stdout.readline()
+                if line.strip():
+                    print(line)
+                if "istening " in line:
                     break
             # now connect
             with patch("time.sleep") as mocked_sleep:
@@ -532,6 +537,7 @@ def test_ssh_calls_retries(mocked_sleep, tmp_path, monkeypatch, capsys):
         f"ssh not ready {i+1}/30: Command 'true' returned non-zero exit status 21."
         for i in range(30)
     ]) + "\n"
+
 
 def test_wait_ssh_ready_timeout():
     vm = MockVM()
