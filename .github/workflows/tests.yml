@@ -334,3 +334,67 @@ jobs:
       - name: Cross arch integration test
         run: |
           sudo -E pytest -rs -k ${{ matrix.arch }} -s -v ./test/test_cross_arch_integration.py
+
+  bootc-image-builder-test:
+    name: "bootc-image-builder tests"
+    runs-on: ubuntu-24.04
+    container:
+      image: registry.fedoraproject.org/fedora:latest
+      options: --privileged
+    steps:
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          set-safe-directory: true
+
+      - name: Install test dependencies
+        run: ./test/scripts/install-dependencies
+
+      - name: Print disk space before tests
+        run: |
+          df -h
+          sudo du -sh * /var/tmp /tmp /var/lib/containers | sort -sh
+
+      - name: Create container storage configuration
+        run: |
+          # see https://github.com/osbuild/bootc-image-builder/issues/446
+          sudo rm -rf /var/lib/containers/storage
+          sudo mkdir -p /etc/containers
+          echo -e "[storage]\ndriver = \"overlay\"\nrunroot = \"/run/containers/storage\"\ngraphroot = \"/var/lib/containers/storage\"" | sudo tee /etc/containers/storage.conf
+
+      - name: Use directory under /mnt as container storage
+        run: |
+          # use custom basetemp here because /var/tmp is on a smaller disk
+          # than /mnt
+          sudo mkdir -p /mnt/var/tmp/bib-tests
+          # on GH runners /mnt has 70G free space, use that for our container
+          # storage
+          sudo mkdir -p /mnt/var/lib/containers
+          sudo mount -o bind /mnt/var/lib/containers /var/lib/containers
+
+      - name: Create osbuild-test-store directory
+        run: |
+          mkdir -p /var/tmp/osbuild-test-store
+
+      - name: Cache osbuild env
+        uses: actions/cache@v5
+        with:
+          path: /var/tmp/osbuild-test-store
+          key: no-key-needed-here
+
+      - name: Run tests
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          # podman needs (parts of) the environment but will break when
+          # XDG_RUNTIME_DIR is set.
+          # TODO: figure out what exactly podman needs
+          sudo -E XDG_RUNTIME_DIR= PYTHONPATH=. pytest -vv --basetemp=/mnt/var/tmp/bib-tests ./bootc-image-builder
+
+      - name: Print disk space after tests
+        if: ${{ always() }}
+        run: |
+          df -h
+          sudo du -sh * /var/tmp /tmp /var/lib/containers | sort -sh
