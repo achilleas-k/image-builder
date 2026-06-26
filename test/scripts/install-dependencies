@@ -14,6 +14,7 @@ install_deps() {
         gcc \
         go \
         gpgme-devel \
+        iproute \
         krb5-devel \
         libvirt-devel \
         lorax \
@@ -31,6 +32,7 @@ install_deps() {
         python3-pytest \
         python3-qemu-qmp \
         python3-scp \
+        sshpass \
         xz \
         yamllint
 }
