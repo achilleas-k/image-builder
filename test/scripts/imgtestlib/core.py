@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import json
 import os
 import pathlib
@@ -218,47 +219,55 @@ def filter_builds(manifests, distro=None, arch=None, skip_ostree_pull=True):
         # print output which includes list of downloaded files for CI job log
         print(out)
 
-    errors: list[str] = []
-    for manifest_fname, data in manifests.items():
-        manifest_id = data["id"]
-        data = data.get("data")
-        build_request = data["build-request"]
-        distro = build_request["distro"]
-        arch = build_request["arch"]
-        image_type = build_request["image-type"]
-        config = build_request["config"]
-        config_name = config["name"]
-        options = config.get("options", {})
+    async def filter_and_touch():
+        touchies = []
+        errors: list[str] = []
+        for manifest_fname, data in manifests.items():
+            manifest_id = data["id"]
+            data = data.get("data")
+            build_request = data["build-request"]
+            distro = build_request["distro"]
+            arch = build_request["arch"]
+            image_type = build_request["image-type"]
+            config = build_request["config"]
+            config_name = config["name"]
+            options = config.get("options", {})
 
-        # check if the config specifies an ostree URL and skip it if requested
-        if skip_ostree_pull and options.get("ostree", {}).get("url"):
-            print(f"🦘 Skipping {distro}/{arch}/{image_type}/{config_name} (ostree dependency)")
-            continue
+            # check if the config specifies an ostree URL and skip it if requested
+            if skip_ostree_pull and options.get("ostree", {}).get("url"):
+                print(f"🦘 Skipping {distro}/{arch}/{image_type}/{config_name} (ostree dependency)")
+                continue
 
-        # add manifest id to build request
-        build_request["manifest-checksum"] = manifest_id
+            # add manifest id to build request
+            build_request["manifest-checksum"] = manifest_id
 
-        # check if the hash_fname exists in the synced directory
-        build_info_dir = os.path.join(
-            dl_root_path,
-            gen_build_info_dir_path_prefix(distro, arch, manifest_id)
-        )
+            # check if the hash_fname exists in the synced directory
+            build_info_dir = os.path.join(
+                dl_root_path,
+                gen_build_info_dir_path_prefix(distro, arch, manifest_id)
+            )
 
-        if check_for_build(manifest_fname, build_request, data["manifest"], build_info_dir, errors):
-            build_requests.append(build_request)
-        else:
-            # The specific build configuration exists in the cache and wont be rebuilt. Update the file timestamps to
-            # keep them fresh in the cache.
-            # touch_s3(distro, arch, manifest_id)
-            # NOTE(2026-06-18): Disabling this temporarily since it slows down the filtering process by a lot
-            print("WARNING: timestamp updating has been temporarily disabled", file=sys.stderr)
+            if check_for_build(manifest_fname, build_request, data["manifest"], build_info_dir, errors):
+                build_requests.append(build_request)
+            else:
+                # The specific build configuration exists in the cache and wont be rebuilt. Update the file timestamps to
+                # keep them fresh in the cache.
+                # touch_info_s3(distro, arch, manifest_id)
+                if not touchies:
+                    touchies.append(asyncio.to_thread(touch_info_s3, distro, arch, manifest_id))
+                # NOTE(2026-06-18): Disabling this temporarily since it slows down the filtering process by a lot
+                print("WARNING: timestamp updating has been temporarily disabled", file=sys.stderr)
 
-    print("✅ Config filtering done!\n")
-    if errors:
-        # print errors at the end so they're visible
-        print("⚠️ Errors:")
-        print("\n".join(errors))
+        print("✅ Config filtering done!\n")
+        if errors:
+            # print errors at the end so they're visible
+            print("⚠️ Errors:")
+            print("\n".join(errors))
 
+        print("Waiting for touchies to finish")
+        await asyncio.gather(*touchies)
+
+    asyncio.run(filter_and_touch())
     return build_requests
 
 
