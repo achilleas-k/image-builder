@@ -6,7 +6,7 @@ import sys
 from typing import Dict
 
 from .build import get_manifest_id
-from .cache import dl_build_info, gen_build_info_dir_path_prefix
+from .cache import dl_build_info, gen_build_info_dir_path_prefix, touch_info_s3
 from .gitlab import log_section
 from .run import runcmd
 from .testenv import rng_seed_env

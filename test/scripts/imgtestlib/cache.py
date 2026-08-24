@@ -107,18 +107,19 @@ def gen_build_info_s3_dir_path(distro=None, arch=None, manifest_id=None, osbuild
     )
 
 
-def touch_s3(distro, arch, manifest_id, osbuild_ref=None, runner_distro=None):
+def touch_info_s3(distro, arch, manifest_id, osbuild_ref=None, runner_distro=None):
     """
-    Update the timestamps of a path in S3 by adding a metadata field to each file recursively. This can be used to
-    "freshen up" relevant files in the build cache so that images that are still current but haven't been updated in a
-    while don't get garbage collected.
+    Update the timestamps of the info.json in S3 that corresponds to the build defined by the function arguments, by
+    adding a metadata field the file. This can be used to "freshen up" relevant builds in the cache so that images that
+    are still current but haven't been updated in a while don't get garbage collected.
     """
     # NOTE: we can make this async - updating the objects can take a few seconds and can be done in parallel
     s3url = gen_build_info_s3_dir_path(distro, arch, manifest_id, osbuild_ref, runner_distro)
+    s3url = os.path.join(s3url, "info.json")
     # the exact key and value don't matter, but let's add the current datetime to make it a bit more meaningful
     now = str(datetime.now())
     print(f"⌚ Updating timestamps for {s3url} ({now})")
-    cmd = ["aws", "s3", "cp", "--recursive", "--metadata", f"touched={now}", s3url, s3url]
+    cmd = ["aws", "s3", "cp", "--metadata", f"touched={now}", s3url, s3url]
     runcmd_nc(cmd)
 
 
