@@ -1,0 +1,360 @@
+<<:
+  <<:
+    supported_partitioning_modes:
+      - ''  # empty string means default partitioning mode
+      - auto-lvm
+      - lvm
+
+  name_aliases: [fedora-iot-commit]
+  filename: commit.tar
+  mime_type: application/x-tar
+  image_func: ostree_commit
+  exports: [commit-archive]
+  required_partition_sizes: &default_required_dir_sizes
+    /: 1 GiB
+    /usr: 2 GiB
+
+  ostree:
+    ref: &ostree_iot_ref '{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/iot'
+  image_config: &image_config_iot_commit
+    <<:
+      enabled_services:
+        - NetworkManager.service
+        - firewalld.service
+        - sshd.service
+        - greenboot-grub2-set-counter
+        - greenboot-grub2-set-success
+        - greenboot-healthcheck
+        - greenboot-rpm-ostree-grub2-check-fallback
+        - greenboot-status
+        - greenboot-task-runner
+        - redboot-auto-reboot
+        - redboot-task-runner
+        - bootloader-update
+      kernel_options:
+        - rw
+        - coreos.no_persist_ip
+
+      conditions:
+        f43 uses new greenboot:
+          when:
+            version_greater_or_equal: '43'
+          shallow_merge:
+            enabled_services:
+              - NetworkManager.service
+              - firewalld.service
+              - sshd.service
+              - greenboot-healthcheck
+              - bootloader-update
+
+    bootupd_gen_metadata: true
+    install_weak_deps: false
+    dracut_conf:
+      - filename: 40-fips.conf
+        config:
+          add_dracutmodules:
+            - fips
+      # see https://github.com/ostreedev/ostree/issues/2840
+    presets:
+      - name: ignition-firstboot-complete.service
+        state: enable
+      - name: coreos-ignition-write-issues.service
+        state: enable
+      - name: fdo-client-linuxapp.service
+        state: enable
+    machine_id_uninitialized: false
+  platforms:
+    - &x86_64_installer_platform
+      <<:
+        <<:
+          arch: x86_64
+          uefi_vendor: fedora
+          qcow2_compat: '1.1'
+          packages: &x86_64_uefi_platform_packages
+            uefi:
+              - dracut-config-generic
+              - efibootmgr
+              - grub2-efi-x64
+              - shim-x64
+          bootloader: grub2
+        bios_platform: i386-pc
+        packages: &x86_64_bios_platform_packages
+          <<: *x86_64_uefi_platform_packages
+          bios:
+            - dracut-config-generic
+            - grub2-pc
+        build_packages:
+          bios:
+            - grub2-pc
+        bootloader: grub2
+    # XXX: the name is not 100% accurate, this platform is also used for iot-container, iot-commit
+      image_format: raw
+      packages: &x86_64_installer_platform_packages
+        <<: *x86_64_bios_platform_packages
+        booting:
+          - biosdevname
+          - grub2-pc-modules
+          - grub2-tools-efi
+          - grub2-tools
+          - grub2-tools-extra
+          - grub2-efi-ia32
+          - grub2-efi-ia32-cdboot
+          - shim-ia32
+        firmware:
+          - microcode_ctl
+          - amd-gpu-firmware
+          - amd-ucode-firmware
+          - atheros-firmware
+          - atmel-firmware
+          - b43-openfwwf
+          - brcmfmac-firmware
+          - intel-gpu-firmware
+          - iwlegacy-firmware
+          - iwlwifi-dvm-firmware
+          - iwlwifi-mvm-firmware
+          - libertas-firmware
+          - linux-firmware
+          - mt7xxx-firmware
+          - nvidia-gpu-firmware
+          - nxpwireless-firmware
+          - qed-firmware
+          - realtek-firmware
+          - tiwilink-firmware
+      build_packages:
+        booting:
+          - shim-ia32
+          - grub2-efi-ia32
+          - grub2-efi-ia32-cdboot
+      bootloader: grub2
+      extra_uefi_architectures:
+        - ia32
+    - &aarch64_installer_platform
+      arch: aarch64
+      uefi_vendor: fedora
+      packages: &aarch64_installer_platform_packages
+        <<:
+          uefi:
+            - dracut-config-generic
+            - efibootmgr
+            - grub2-efi-aa64
+            - grub2-tools
+            - shim-aa64
+        booting:
+          - arm-image-installer
+          - grub2-efi-aa64-cdboot
+          - uboot-images-armv8
+          - uboot-tools
+        firmware:
+          - amd-gpu-firmware
+          - atheros-firmware
+          - atmel-firmware
+          - b43-openfwwf
+          - bcm2711-firmware
+          - bcm2835-firmware
+          - bcm283x-firmware
+          - brcmfmac-firmware
+          - intel-gpu-firmware
+          - iwlegacy-firmware
+          - iwlwifi-dvm-firmware
+          - iwlwifi-mvm-firmware
+          - libertas-firmware
+          - linux-firmware
+          - mt7xxx-firmware
+          - nvidia-gpu-firmware
+          - nxpwireless-firmware
+          - qcom-firmware
+          - qed-firmware
+          - realtek-firmware
+          - tiwilink-firmware
+      bootloader: grub2
+  platforms_override:
+    conditions:
+      Fedora 45 and up no longer have zd1211-firmware:
+        when:
+          version_less_than: '45'
+        override:
+          - &x86_64_installer_platform_compat
+            <<: *x86_64_installer_platform
+            packages:
+              <<: *x86_64_installer_platform_packages
+              compat:
+                - zd1211-firmware
+          - &aarch64_installer_platform_compat
+            <<: *aarch64_installer_platform
+            packages:
+              <<: *aarch64_installer_platform_packages
+              compat:
+                - zd1211-firmware
+  package_sets:
+    os:
+      - include:
+          - NetworkManager
+          - NetworkManager-wifi
+          - NetworkManager-wwan
+          - aardvark-dns
+          - atheros-firmware
+          - attr
+          - authselect
+          - bash
+          - bash-completion
+          - bootupd
+          - brcmfmac-firmware
+          - chrony
+          - clevis
+          - clevis-dracut
+          - clevis-luks
+          - clevis-pin-tpm2
+          - container-selinux
+          - containernetworking-plugins
+          - coreutils
+          - cracklib-dicts
+          - criu
+          - cryptsetup
+          - curl
+          - dosfstools
+          - dracut-config-generic
+          - dracut-network
+          - e2fsprogs
+          - efibootmgr
+          - fdo-client
+          - fdo-owner-cli
+          - fedora-iot-config
+          - fedora-release-iot
+          - firewalld
+          - fwupd
+          - fwupd-efi
+          - fwupd-plugin-modem-manager
+          - fwupd-plugin-uefi-capsule-data
+          - glibc
+          - glibc-minimal-langpack
+          - gnupg2
+          - greenboot
+          - greenboot-default-health-checks
+          - gzip
+          - hostname
+          - ignition
+          - ignition-edge
+          - ima-evm-utils
+          - iproute
+          - iputils
+          - iwd
+          - iwlwifi-mvm-firmware
+          - keyutils
+          - less
+          - libsss_sudo
+          - linux-firmware
+          - lvm2
+          - netavark
+          - nss-altfiles
+          - openssh-clients
+          - openssh-server
+          - openssl
+          - pinentry
+          - podman
+          - policycoreutils
+          - polkit
+          - procps-ng
+          - realtek-firmware
+          - rootfiles
+          - rpm
+          - screen
+          - selinux-policy-targeted
+          - setools-console
+          - setup
+          - shadow-utils
+          - skopeo
+          - sssd-client
+          - sudo
+          - systemd
+          - systemd-resolved
+          - tar
+          - tmux
+          - tpm2-pkcs11
+          - traceroute
+          - usbguard
+          - util-linux
+          - vim-minimal
+          - wireless-regdb
+          - wpa_supplicant
+          - xfsprogs
+          - xz
+          - zram-generator
+        conditions:
+          f42 and below uses basesystem:
+            when:
+              version_less_than: '43'
+            append:
+              include:
+                - basesystem
+          f43+ needs the filesystem pkg:
+            when:
+              version_greater_or_equal: '43'
+            append:
+              include:
+                - filesystem
+          f44 does not have ssh-key-dir:
+            when:
+              version_less_than: '44'
+            append:
+              include:
+                - ssh-key-dir
+  blueprint:
+    supported_options:
+      - distro
+      - packages
+      - modules
+      - groups
+      - enabled_modules
+      - containers
+      - customizations.cacerts
+      - customizations.directories
+      - customizations.files
+      - customizations.fips
+      - customizations.firewall
+      - customizations.firstboot
+      - customizations.user
+      - customizations.sshkey
+      - customizations.group
+      - customizations.hostname
+      - customizations.kernel.name
+      - customizations.locale
+      - customizations.repositories
+      - customizations.services
+      - customizations.timezone
+
+    # supported options for container types (container and wsl)
+name_aliases: [fedora-iot-container]
+filename: container.oci.tar
+mime_type: application/x-tar
+image_func: ostree_container
+exports: [container]
+required_partition_sizes: *default_required_dir_sizes
+ostree:
+  ref: *ostree_iot_ref
+image_config:
+  <<: *image_config_iot_commit
+  install_weak_deps: true
+  ostree_server:
+    port: &ostree_server_port '8080'
+    config_path: &ostree_server_config_path /etc/nginx.conf
+
+  oci:
+    archive:
+      cmd:
+        - nginx
+        - -c
+        - *ostree_server_config_path
+      exposed_ports:
+        - *ostree_server_port
+platforms:
+  - *x86_64_installer_platform
+  - *aarch64_installer_platform
+platforms_override:
+  conditions:
+    Fedora 45 and up no longer have zd1211-firmware:
+      when:
+        version_less_than: '45'
+      override:
+        - *x86_64_installer_platform_compat
+        - *aarch64_installer_platform_compat
+
