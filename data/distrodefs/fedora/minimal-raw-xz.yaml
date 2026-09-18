@@ -1,0 +1,220 @@
+name_aliases: [minimal-raw]
+filename: disk.raw.xz
+compression: xz
+mime_type: application/xz
+bootable: true
+default_size: 2 GiB
+image_func: disk
+exports: [xz]
+required_partition_sizes:
+  /: 1 GiB
+  /usr: 2 GiB
+
+platforms:
+  - <<:
+      arch: x86_64
+      uefi_vendor: fedora
+      qcow2_compat: '1.1'
+      packages:
+        uefi:
+          - dracut-config-generic
+          - efibootmgr
+          - grub2-efi-x64
+          - shim-x64
+      bootloader: grub2
+    image_format: raw
+  - arch: aarch64
+    uefi_vendor: fedora
+    image_format: raw
+    packages:
+      <<:
+        uefi:
+          - dracut-config-generic
+          - efibootmgr
+          - grub2-efi-aa64
+          - grub2-tools
+          - shim-aa64
+      firmware:
+        - arm-image-installer
+        - bcm283x-firmware
+        - uboot-images-armv8
+    boot_files:
+      - src: /usr/share/uboot/rpi_arm64/u-boot.bin
+        dst: /boot/efi/rpi-u-boot.bin
+    bootloader: grub2
+  - arch: riscv64
+    uefi_vendor: fedora
+    image_format: raw
+    packages:
+        # XXX: this is needed to get a generic bootkernel,
+        # this should probably be part of any bootable img
+        # packagelist
+      uefi:
+        - dracut-config-generic
+        - grub2-efi-riscv64
+        - grub2-efi-riscv64-modules
+        - shim-unsigned-riscv64
+    bootloader: grub2
+disk_config:
+  mount_configuration: units
+  conditions:
+    f42 and below was quite different:
+      when:
+        version_less_than: '43'
+      shallow_merge:
+        mount_configuration: fstab
+image_config:
+      # NOTE: initial-setup doesn't allow a system to be reconfigured
+      # NOTE: if certain files are already configured (locale, users,
+      # NOTE: that sort of stuff). With this kickstart we enable reconfig
+      # NOTE: of those values since we have already written them in the
+      # NOTE: disk image but they might not be what the user wants.
+  files:
+    - path: /root/anaconda-ks.cfg
+      user: root
+      group: root
+      data: |
+        # Run initial-setup on first boot
+        # Created by osbuild
+        firstboot --reconfig
+  grub2_config:
+    timeout: 5
+  install_weak_deps: false
+  machine_id_uninitialized: false
+  enabled_services:
+    - NetworkManager.service
+    - initial-setup.service
+    - sshd.service
+  kernel_options:
+    - rw
+  conditions:
+    f42 and below was quite different:
+      when:
+        version_less_than: '43'
+      shallow_merge:
+        install_weak_deps: true
+        enabled_services:
+          - NetworkManager.service
+          - initial-setup.service
+          - sshd.service
+          - firewalld.service
+        kernel_options:
+          - ro
+partition_table:
+  <<:
+    x86_64:
+      type: gpt
+      partitions:
+        - &default_partition_table_part_efi
+          size: 200 MiB
+          type: &efi_system_partition_guid C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+          payload_type: filesystem
+          payload:
+            type: vfat
+            mountpoint: /boot/efi
+            label: ESP
+            fstab_options: defaults,uid=0,gid=0,umask=077,shortname=winnt
+            fstab_freq: 0
+            fstab_passno: 2
+        - &minimal_raw_partition_table_part_boot
+          <<:
+            size: 2 GiB
+            type: &filesystem_data_guid 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+            payload_type: filesystem
+            payload:
+              type: ext4
+              mountpoint: /boot
+              label: boot
+              fstab_options: defaults
+              fstab_freq: 0
+              fstab_passno: 0
+          type: &xboot_ldr_partition_guid BC13C2FF-59E6-4262-A352-B275FD6F7172
+        - <<: &default_partition_table_part_root
+            size: 2 GiB
+            type: *filesystem_data_guid
+            payload_type: filesystem
+            payload:
+              type: ext4
+              label: root
+              mountpoint: /
+              fstab_options: defaults
+              fstab_freq: 0
+              fstab_passno: 0
+      # iot partitions
+    aarch64: &minimal_raw_partition_table_aarch64
+      type: dos
+      start_offset: 16 MiB
+      partitions:
+        - <<: *default_partition_table_part_efi
+          bootable: true
+          type: &fat16_bdosid '06'
+        - <<: *minimal_raw_partition_table_part_boot
+          type: &filesystem_linux_dosid '83'
+        - <<: *default_partition_table_part_root
+          type: *filesystem_linux_dosid
+    riscv64: *minimal_raw_partition_table_aarch64
+package_sets:
+  os:
+    - include:
+        - '@core'
+        - bash-completion
+        - grubby
+        - initial-setup
+        - libxkbcommon
+        - NetworkManager-wifi
+        - linux-firmware
+        - brcmfmac-firmware
+        - iwlwifi-mvm-firmware
+        - realtek-firmware
+      exclude:
+        - dracut-config-rescue
+      conditions:
+        no firewalld on f43+:
+          when:
+            version_greater_or_equal: '43'
+          append:
+            exclude:
+              - firewalld
+        x86_64 uefi packages:
+          when:
+            arch: x86_64
+          append:
+            include:
+              - fwupd-efi
+        aarch64 uefi packages:
+          when:
+            arch: aarch64
+          append:
+            include:
+              - fwupd-efi
+blueprint:
+  supported_options:
+    - distro
+    - packages
+    - modules
+    - groups
+    - enabled_modules
+    - containers
+    - customizations.cacerts
+    - customizations.directories
+    - customizations.disk
+    - customizations.files
+    - customizations.filesystem
+    - customizations.firstboot
+    - customizations.partitioning_mode
+    - customizations.fips
+    - customizations.firewall
+    - customizations.user
+    - customizations.sshkey
+    - customizations.group
+    - customizations.hostname
+    - customizations.kernel
+    - customizations.locale
+    - customizations.openscap
+    - customizations.repositories
+    - customizations.rpm
+    - customizations.services
+    - customizations.timezone
+    - customizations.sshd
+
+    # options supported by base ostree image types (commit and container)

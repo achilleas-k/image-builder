@@ -1,0 +1,153 @@
+<<:
+  <<:
+    <<:
+      supported_partitioning_modes:
+        - '' # empty string means default partitioning mode
+        - auto-lvm
+        - lvm
+
+    default_size: 10 GiB
+    bootable: true
+    image_func: ostree_disk
+    ostree: &ostree_atomic
+      name: fedora
+      remote_name: fedora
+      url: mirrorlist=https://ostree.fedoraproject.org/mirrorlist
+
+    required_partition_sizes:
+      /: 1 GiB
+      /usr: 2 GiB
+
+    image_config:
+      kernel_options:
+        - rw
+        - coreos.no_persist_ip
+
+      ignition_platform: qemu
+    partition_table:
+      <<:
+        x86_64:
+          uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+          type: gpt
+          start_offset: 8 MiB
+          partitions:
+            - &iot_base_partition_table_part_efi
+              size: 501 MiB
+              type: &efi_system_partition_guid 
+                C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+              payload_type: filesystem
+              payload:
+                type: vfat
+                mountpoint: /boot/efi
+                label: ESP
+                fstab_options: umask=0077,shortname=winnt
+                fstab_freq: 0
+                fstab_passno: 2
+            - &iot_base_partition_table_part_boot
+              size: 2 GiB
+              type: &filesystem_data_guid 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+              payload_type: filesystem
+              payload:
+                type: ext4
+                label: boot
+                mountpoint: /boot
+                fstab_options: defaults
+                fstab_freq: 1
+                fstab_passno: 2
+            - <<: &iot_base_partition_table_part_root
+                size: 2569 MiB
+                type: *filesystem_data_guid
+                payload_type: filesystem
+                payload: &iot_base_partition_table_part_root_payload
+                  type: ext4
+                  label: root
+                  mountpoint: /
+                  fstab_options: defaults,ro
+                  fstab_freq: 1
+                  fstab_passno: 1
+      # identical to above but has "fstab_options"
+              payload:
+                <<: *iot_base_partition_table_part_root_payload
+                fstab_options: defaults,ro
+      # minimal raw aarch64
+        aarch64:
+          uuid: '0xc1748067'
+          type: dos
+          start_offset: 16 MiB
+          partitions:
+            - <<: *iot_base_partition_table_part_efi
+              bootable: true
+              type: &fat16_bdosid '06'
+              uuid: ''
+            - <<: *iot_base_partition_table_part_boot
+              type: &filesystem_linux_dosid '83'
+              uuid: ''
+            - <<:
+                <<: *iot_base_partition_table_part_root
+                type: *filesystem_linux_dosid
+                uuid: ''
+              payload:
+                <<: *iot_base_partition_table_part_root_payload
+                fstab_options: defaults,ro
+
+      # Fedora Server uses XFS on top of LVM
+
+    blueprint:
+      supported_options:
+        - distro
+        - customizations.cacerts
+        - customizations.files
+        - customizations.directories
+        - customizations.disk
+        - customizations.filesystem
+        - customizations.firstboot
+        - customizations.partitioning_mode
+        - customizations.fips
+        - customizations.user
+        - customizations.sshkey
+        - customizations.group
+        - customizations.kernel.append
+        - customizations.locale
+        - customizations.services
+
+    # options supported by PXE image type
+    # Includes everything except disk, filesystem, and partitioning_mode
+  filename: image.qcow2
+  mime_type: application/x-qemu-disk
+  exports: [qcow2]
+  platforms:
+    - <<:
+        arch: x86_64
+        uefi_vendor: fedora
+        qcow2_compat: '1.1'
+        packages:
+          uefi:
+            - dracut-config-generic
+            - efibootmgr
+            - grub2-efi-x64
+            - shim-x64
+        bootloader: grub2
+      image_format: qcow2
+        # XXX: the original images lib defined no qcow2Compat
+      qcow2_compat: ''
+    - <<:
+        arch: aarch64
+        uefi_vendor: fedora
+        image_format: qcow2
+        qcow2_compat: '1.1'
+        packages:
+          uefi:
+            - dracut-config-generic
+            - efibootmgr
+            - grub2-efi-aa64
+            - grub2-tools
+            - shim-aa64
+        bootloader: grub2
+      image_format: qcow2
+      qcow2_compat: '1.1'
+
+variant: Silverblue
+ostree:
+  <<: *ostree_atomic
+  ref: '{{.Distro.Name}}/{{.Distro.MajorVersion}}/{{.Arch}}/silverblue'
+
