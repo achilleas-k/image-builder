@@ -85,7 +85,7 @@ func Load(paths ...string) (BuildConfig, error) {
 	for _, path := range paths {
 		fp, err := os.Open(filepath.Join("data/configs", path))
 		if err != nil {
-			return BuildConfig{}, nil
+			return BuildConfig{}, err
 		}
 		decoder := yaml.NewDecoder(fp)
 		decoder.KnownFields(true)
