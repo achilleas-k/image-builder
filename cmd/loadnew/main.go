@@ -8,14 +8,21 @@ import (
 	"github.com/osbuild/image-builder/pkg/distro/defs"
 )
 
-func jsonPrint(thingie any) {
+func jsonPrint(thingie any, filename string) {
 	c, err := json.MarshalIndent(thingie, "", "  ")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "E: %s\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Println(string(c))
+	_ = os.Remove(filename) // don't care if it fails
+
+	if err := os.WriteFile(filename, c, 0600); err != nil {
+		fmt.Fprintf(os.Stderr, "E: %s\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("%s OK\n", filename)
 }
 
 func main() {
@@ -31,7 +38,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	jsonPrint(config)
+	jsonPrint(config, "layered.json")
 
 	fedora, err := defs.New("fedora-44")
 	if err != nil {
@@ -51,5 +58,5 @@ func main() {
 		os.Exit(1)
 	}
 
-	jsonPrint(qcow2)
+	jsonPrint(qcow2, "expected.json")
 }
