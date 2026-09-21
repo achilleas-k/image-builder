@@ -1,0 +1,5 @@
+---
+distribution_name: "fedora"
+depsolver: "dnf"  # osbuild-depsolve-dnf
+package_manager: "rpm"
+uefi_vendor: "fedora"

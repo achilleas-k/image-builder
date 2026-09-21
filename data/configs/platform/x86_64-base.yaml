@@ -1,0 +1,11 @@
+---
+architecture: "x86_64"
+bootloader: "grub2"
+content:
+  packages:
+    uefi:
+      include:
+        - "dracut-config-generic"
+        - "efibootmgr"
+        - "grub2-efi-x64"
+        - "shim-x64"
