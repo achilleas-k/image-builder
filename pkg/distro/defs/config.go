@@ -22,7 +22,7 @@ type BuildConfig struct {
 	Exports        []string        `yaml:"exports,omitempty"`
 	Blueprint      BlueprintConfig `yaml:"blueprint,omitempty"`
 	Content        ContentConfig   `yaml:"content,omitempty"`
-	Config         SystemConfig    `yaml:"config,omitempty"`
+	System         SystemConfig    `yaml:"system,omitempty"`
 	PartitionTable PartitionTables `yaml:"partition_table,omitempty"`
 
 	DistributionName string `yaml:"distribution_name"`
@@ -48,8 +48,16 @@ type PackageSet struct {
 }
 
 type SystemConfig struct {
-	DefaultTarget string   `yaml:"default_target,omitempty"`
-	KernelOptions []string `yaml:"kernel_options,omitempty"`
+	DefaultTarget          string   `yaml:"default_target,omitempty"`
+	KernelOptions          []string `yaml:"kernel_options,omitempty"`
+	DefaultOSCAPDatastream *string  `yaml:"default_oscap_datastream,omitempty"`
+	InstallWeakDeps        bool     `yaml:"install_weak_deps,omitempty"`
+	Locale                 string   `yaml:"locale,omitempty"`
+	MachineIdUninitialized bool     `yaml:"machine_id_uninitialized,omitempty"`
+	Timezone               string   `yaml:"timezone,omitempty"`
+	DefaultKernel          string   `yaml:"default_kernel,omitempty"`
+	UpdateDefaultKernel    bool     `yaml:"update_default_kernel,omitempty"`
+	Hostname               string   `yaml:"hostname,omitempty"`
 }
 
 type PartitionTables struct {
