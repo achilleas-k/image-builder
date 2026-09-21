@@ -2,12 +2,15 @@ package defs
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/rand"
+	"reflect"
 	"slices"
 	"strings"
 	"text/template"
+	"unsafe"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/image-builder/internal/environment"
@@ -582,4 +585,25 @@ func (t *imageType) expandOSTreeRefTemplate(ar *architecture, id distro.ID) erro
 
 func (t *imageType) isOSTreeBasedImageType() bool {
 	return t.ostree.Name != "" || t.ostree.RemoteName != "" || t.ostree.Ref != "" || t.ostree.URL != ""
+}
+
+func (s imageType) MarshalJSON() ([]byte, error) {
+	out := make(map[string]any)
+	// reflect.ValueOf(&s).Elem() makes the struct fields addressable
+	v := reflect.ValueOf(&s).Elem()
+	t := v.Type()
+
+	for i := 0; i < v.NumField(); i++ {
+		switch t.Field(i).Name {
+		case "image", "arch":
+			// image is a function pointer
+			// arch has a reference back to the image type so let's skip it too
+			continue
+		}
+		f := v.Field(i)
+		val := reflect.NewAt(f.Type(), unsafe.Pointer(f.UnsafeAddr())).Elem().Interface()
+		out[t.Field(i).Name] = val
+	}
+
+	return json.Marshal(out)
 }
