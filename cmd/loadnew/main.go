@@ -6,7 +6,6 @@ import (
 	"os"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
-	"github.com/osbuild/image-builder/internal/cmdutil"
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"github.com/osbuild/image-builder/pkg/distro/defs"
@@ -14,6 +13,13 @@ import (
 	"github.com/osbuild/image-builder/pkg/manifestgen/manifestmock"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
+
+type ConfigMapping struct {
+	layers    []string
+	distro    string
+	arch      string
+	imageType string
+}
 
 func checkerr(err error) {
 	if err != nil {
@@ -36,39 +42,59 @@ func jsonPrint(thingie any, filename string) {
 		os.Exit(1)
 	}
 
-	fmt.Printf("%s OK\n", filename)
 }
 
 func main() {
-	paths := []string{
-		"distro/fedora.yaml",
-		"platform/x86_64-base.yaml",
-		"type/qcow2.yaml",
+
+	configMappings := []ConfigMapping{
+		{
+			layers: []string{
+				"distro/fedora.yaml",
+				"platform/x86_64-base.yaml",
+				"type/qcow2.yaml",
+			},
+			distro:    "fedora-44",
+			arch:      "x86_64",
+			imageType: "generic-qcow2",
+		},
+		{
+			layers: []string{
+				"distro/fedora.yaml",
+				"platform/x86_64-base.yaml",
+				"type/ami.yaml",
+			},
+			distro:    "fedora-44",
+			arch:      "x86_64",
+			imageType: "ami",
+		},
 	}
 
-	config, err := defs.Load(paths...)
-	checkerr(err)
+	for idx, mapping := range configMappings {
+		config, err := defs.Load(mapping.layers...)
+		checkerr(err)
 
-	// jsonPrint(config, "layered.json")
+		fedora, err := defs.New(mapping.distro)
+		checkerr(err)
 
-	fedora, err := defs.New("fedora-44")
-	checkerr(err)
+		x86, err := fedora.GetArch(mapping.arch)
+		checkerr(err)
 
-	x86, err := fedora.GetArch("x86_64")
-	checkerr(err)
+		qcow2, err := x86.GetImageType(mapping.imageType)
+		checkerr(err)
 
-	qcow2, err := x86.GetImageType("generic-qcow2")
-	checkerr(err)
+		converted, err := defs.ImageTypeFromConfig(config, qcow2)
+		checkerr(err)
 
-	converted, err := defs.ImageTypeFromConfig(config, qcow2)
-	checkerr(err)
-	jsonPrint(doManifest(converted), "converted.json")
-	jsonPrint(doManifest(qcow2), "old.json")
+		basename := fmt.Sprintf("%s-%s-%s", mapping.distro, mapping.arch, mapping.imageType)
+
+		jsonPrint(doManifest(converted), basename+".new.json")
+		jsonPrint(doManifest(qcow2), basename+".old.json")
+		fmt.Printf("[%02d] %s OK\n", idx, basename)
+	}
 }
 
 func doManifest(imgType distro.ImageType) manifest.OSBuildManifest {
 	options := distro.ImageOptions{}
-	seedArg, err := cmdutil.NewRNGSeed()
 	bp := new(blueprint.Blueprint)
 	repos := []rpmmd.RepoConfig{
 		{
@@ -77,7 +103,7 @@ func doManifest(imgType distro.ImageType) manifest.OSBuildManifest {
 		},
 	}
 
-	mf, _, err := imgType.Manifest(bp, options, repos, &seedArg)
+	mf, _, err := imgType.Manifest(bp, options, repos, common.ToPtr(int64(99)))
 	checkerr(err)
 
 	archName := imgType.Arch().Name()
