@@ -6,8 +6,8 @@ import (
 	"path/filepath"
 	"slices"
 
-	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/datasizes"
+	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/distro"
 	"go.yaml.in/yaml/v3"
 )
@@ -61,8 +61,8 @@ type SystemConfig struct {
 }
 
 type PartitionTables struct {
-	RequiredPartitionSizes map[string]string               `yaml:"required_partition_sizes,omitempty"`
-	Architecture           map[string]PartitionTableConfig `yaml:"architecture,omitempty"`
+	RequiredPartitionSizes map[string]string              `yaml:"required_partition_sizes,omitempty"`
+	Architecture           map[string]disk.PartitionTable `yaml:"architecture,omitempty"`
 }
 
 type PartitionTableConfig struct {
@@ -106,35 +106,28 @@ func Load(paths ...string) (BuildConfig, error) {
 	return config, nil
 }
 
-func ImageTypeFromConfig(config BuildConfig) (distro.ImageType, error) {
-	a, err := arch.FromString(config.Architecture)
-	if err != nil {
-		return nil, err
-	}
-	arch := &architecture{
-		arch: a,
-	}
-
-	var size *datasizes.Size
-	if err := size.UnmarshalText([]byte(config.DefaultSize)); err != nil {
-		return nil, err
-	}
-
+func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distro.ImageType, error) {
+	bf := borrowFrom.(*imageType)
 	partSizes := make(map[string]datasizes.Size, len(config.PartitionTable.RequiredPartitionSizes))
 	for path, sizeStr := range config.PartitionTable.RequiredPartitionSizes {
 		partSizes[path] = convertSize(sizeStr)
 	}
 
+	pt := disk.PartitionTable(config.PartitionTable.Architecture[config.Architecture])
+
 	it := imageType{
 		name:                   config.Names[0],
 		nameAliases:            config.Names[1:],
-		arch:                   arch,
+		arch:                   bf.arch,
 		filename:               config.Filename,
 		mimeType:               config.MIMEType,
 		bootable:               config.Bootable,
 		defaultSize:            convertSize(config.DefaultSize),
 		exports:                config.Exports,
 		requiredPartitionSizes: partSizes,
+		partitionTable:         &pt,
+
+		platform: bf.platform,
 
 		blueprint: blueprintOptions{
 			// The blueprint contains a few fields that are essentially
@@ -142,13 +135,14 @@ func ImageTypeFromConfig(config BuildConfig) (distro.ImageType, error) {
 			// always be implicitly supported by all image types.
 			SupportedOptions: append(slices.Clone(config.Blueprint.SupportedOptions), "name", "version", "description"),
 		},
+		image: diskImage,
 	}
 
 	return &it, nil
 }
 
 func convertSize(s string) datasizes.Size {
-	var size *datasizes.Size
+	size := new(datasizes.Size)
 	if err := size.UnmarshalText([]byte(s)); err != nil {
 		panic(err)
 	}
