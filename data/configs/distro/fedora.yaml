@@ -7,9 +7,14 @@ uefi_vendor: "fedora"
 system:
   default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
   hostname: "localhost.localdomain"
-  install_weak_deps: true
   locale: "C.UTF-8"
-  machine_id_uninitialized: true
   timezone: "UTC"
   default_kernel: "kernel-core"
   update_default_kernel: true
+
+  systemd:
+    machine_id_uninitialized: true
+
+content:
+  packages:
+    install_weak_deps: true
