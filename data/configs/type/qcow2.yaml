@@ -39,28 +39,36 @@ blueprint:
 
 content:
   packages:
-    os:
-      include:
-        - '@Fedora Cloud Server'
-        - chrony
-        - cloud-init
-        - langpacks-en
-        - qemu-guest-agent
-        - qemu-guest-agent
-      exclude:
-        - dracut-config-rescue
-        - firewalld
-        - geolite2-city
-        - geolite2-country
-        - plymouth
+    sets:
+      os:
+        include:
+          - '@Fedora Cloud Server'
+          - chrony
+          - cloud-init
+          - langpacks-en
+          - qemu-guest-agent
+          - qemu-guest-agent
+        exclude:
+          - dracut-config-rescue
+          - firewalld
+          - geolite2-city
+          - geolite2-country
+          - plymouth
 
 system:
-  default_target: multi-user.target
   kernel_options:
     - console=tty1
     - console=ttyS0,115200n8
     - earlyprintk=ttyS0
     - systemd.firstboot=off
+  systemd:
+    default_target: "multi-user.target"
+    services:
+      enable:
+        - "cloud-init-network.service"
+        - "cloud-config.service"
+        - "cloud-final.service"
+        - "cloud-init-local.service"
 
 partition_table:
   required_partition_sizes:

@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 	"slices"
 
+	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/datasizes"
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -39,7 +41,12 @@ type BlueprintConfig struct {
 }
 
 type ContentConfig struct {
-	Packages map[string]PackageSet `yaml:"packages,omitempty"`
+	Packages PackagesConfig `yaml:"packages,omitempty"`
+}
+
+type PackagesConfig struct {
+	InstallWeakDeps bool                  `yaml:"install_weak_deps,omitempty"`
+	Sets            map[string]PackageSet `yaml:"sets,omitempty"`
 }
 
 type PackageSet struct {
@@ -48,16 +55,14 @@ type PackageSet struct {
 }
 
 type SystemConfig struct {
-	DefaultTarget          string   `yaml:"default_target,omitempty"`
-	KernelOptions          []string `yaml:"kernel_options,omitempty"`
-	DefaultOSCAPDatastream *string  `yaml:"default_oscap_datastream,omitempty"`
-	InstallWeakDeps        bool     `yaml:"install_weak_deps,omitempty"`
-	Locale                 string   `yaml:"locale,omitempty"`
-	MachineIdUninitialized bool     `yaml:"machine_id_uninitialized,omitempty"`
-	Timezone               string   `yaml:"timezone,omitempty"`
-	DefaultKernel          string   `yaml:"default_kernel,omitempty"`
-	UpdateDefaultKernel    bool     `yaml:"update_default_kernel,omitempty"`
-	Hostname               string   `yaml:"hostname,omitempty"`
+	KernelOptions          []string      `yaml:"kernel_options,omitempty"`
+	DefaultOSCAPDatastream *string       `yaml:"default_oscap_datastream,omitempty"`
+	Locale                 string        `yaml:"locale,omitempty"`
+	Timezone               string        `yaml:"timezone,omitempty"`
+	DefaultKernel          string        `yaml:"default_kernel,omitempty"`
+	UpdateDefaultKernel    bool          `yaml:"update_default_kernel,omitempty"`
+	Hostname               string        `yaml:"hostname,omitempty"`
+	Systemd                SystemdConfig `yaml:"systemd,omitempty"`
 }
 
 type PartitionTables struct {
@@ -88,6 +93,18 @@ type PayloadConfig struct {
 	FstabPassno  int    `yaml:"fstab_passno"`
 }
 
+type SystemdConfig struct {
+	DefaultTarget          string                `yaml:"default_target,omitempty"`
+	MachineIdUninitialized bool                  `yaml:"machine_id_uninitialized,omitempty"`
+	Services               SystemdServicesConfig `yaml:"services,omitempty"`
+}
+
+type SystemdServicesConfig struct {
+	Enable  []string `yaml:"enable,omitempty"`
+	Disable []string `yaml:"disable,omitempty"`
+	Mask    []string `yaml:"mask,omitempty"`
+}
+
 func Load(paths ...string) (BuildConfig, error) {
 	var config BuildConfig
 	for _, path := range paths {
@@ -115,6 +132,14 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 
 	pt := disk.PartitionTable(config.PartitionTable.Architecture[config.Architecture])
 
+	packageSets := make(map[string]rpmmd.PackageSet, len(config.Content.Packages.Sets))
+	for name, set := range config.Content.Packages.Sets {
+		packageSets[name] = rpmmd.PackageSet{
+			Include: slices.Clone(set.Include),
+			Exclude: slices.Clone(set.Exclude),
+		}
+	}
+
 	it := imageType{
 		name:                   config.Names[0],
 		nameAliases:            config.Names[1:],
@@ -126,6 +151,20 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 		exports:                config.Exports,
 		requiredPartitionSizes: partSizes,
 		partitionTable:         &pt,
+		imageConfig: distro.ImageConfig{
+			KernelOptions:          config.System.KernelOptions,
+			Locale:                 &config.System.Locale,
+			Hostname:               &config.System.Hostname,
+			Timezone:               &config.System.Timezone,
+			UpdateDefaultKernel:    common.ToPtr(true),
+			DefaultKernel:          common.ToPtr("kernel-core"),
+			EnabledServices:        config.System.Systemd.Services.Enable,
+			DisabledServices:       config.System.Systemd.Services.Disable,
+			MaskedServices:         config.System.Systemd.Services.Mask,
+			DefaultTarget:          &config.System.Systemd.DefaultTarget,
+			MachineIdUninitialized: &config.System.Systemd.MachineIdUninitialized,
+			InstallWeakDeps:        &config.Content.Packages.InstallWeakDeps,
+		},
 
 		platform: bf.platform,
 
@@ -136,6 +175,8 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 			SupportedOptions: append(slices.Clone(config.Blueprint.SupportedOptions), "name", "version", "description"),
 		},
 		image: diskImage,
+
+		packageSets: packageSets,
 	}
 
 	return &it, nil
