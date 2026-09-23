@@ -64,6 +64,8 @@ func main() {
 			layers: []string{
 				"distro/fedora.yaml",
 				"platform/x86_64-base.yaml",
+				"common/customizations-for-disk.yaml",
+				"common/cloud-init-services.yaml",
 				"type/qcow2.yaml",
 			},
 			distro:    "fedora-44",
@@ -74,6 +76,8 @@ func main() {
 			layers: []string{
 				"distro/fedora.yaml",
 				"platform/x86_64-base.yaml",
+				"common/customizations-for-disk.yaml",
+				"common/cloud-init-services.yaml",
 				"type/ami.yaml",
 			},
 			distro:    "fedora-44",

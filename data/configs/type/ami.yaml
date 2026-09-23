@@ -6,36 +6,6 @@ bootable: true
 default_size: 5 GiB
 exports: [image]
 
-blueprint:
-  supported_options:
-    - distro
-    - packages
-    - modules
-    - groups
-    - enabled_modules
-    - containers
-    - customizations.cacerts
-    - customizations.directories
-    - customizations.disk
-    - customizations.files
-    - customizations.filesystem
-    - customizations.firstboot
-    - customizations.partitioning_mode
-    - customizations.fips
-    - customizations.firewall
-    - customizations.user
-    - customizations.sshkey
-    - customizations.group
-    - customizations.hostname
-    - customizations.kernel
-    - customizations.locale
-    - customizations.openscap
-    - customizations.repositories
-    - customizations.rpm
-    - customizations.services
-    - customizations.timezone
-    - customizations.sshd
-
 content:
   packages:
     sets:
@@ -61,12 +31,6 @@ system:
     - systemd.firstboot=off
   systemd:
     default_target: "multi-user.target"
-    services:
-      enable:
-        - "cloud-init-network.service"
-        - "cloud-config.service"
-        - "cloud-final.service"
-        - "cloud-init-local.service"
 
 partition_table:
   required_partition_sizes:
