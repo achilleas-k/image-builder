@@ -46,7 +46,6 @@ content:
           - cloud-init
           - langpacks-en
           - qemu-guest-agent
-          - qemu-guest-agent
         exclude:
           - dracut-config-rescue
           - firewalld
