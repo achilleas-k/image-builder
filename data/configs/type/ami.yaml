@@ -4,7 +4,6 @@ filename: image.raw
 mime_type: application/octet-stream
 bootable: true
 default_size: 5 GiB
-image_func: disk
 exports: [image]
 
 blueprint:
