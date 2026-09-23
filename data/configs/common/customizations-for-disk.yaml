@@ -1,0 +1,30 @@
+---
+blueprint:
+  supported_options:
+    - distro
+    - packages
+    - modules
+    - groups
+    - enabled_modules
+    - containers
+    - customizations.cacerts
+    - customizations.directories
+    - customizations.disk
+    - customizations.files
+    - customizations.filesystem
+    - customizations.firstboot
+    - customizations.partitioning_mode
+    - customizations.fips
+    - customizations.firewall
+    - customizations.user
+    - customizations.sshkey
+    - customizations.group
+    - customizations.hostname
+    - customizations.kernel
+    - customizations.locale
+    - customizations.openscap
+    - customizations.repositories
+    - customizations.rpm
+    - customizations.services
+    - customizations.timezone
+    - customizations.sshd

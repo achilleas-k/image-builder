@@ -1,0 +1,10 @@
+---
+system:
+  systemd:
+    default_target: "multi-user.target"
+    services:
+      enable:
+        - "cloud-init-network.service"
+        - "cloud-config.service"
+        - "cloud-final.service"
+        - "cloud-init-local.service"
