@@ -8,12 +8,14 @@ system:
   default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
   hostname: "localhost.localdomain"
   locale: "C.UTF-8"
-  timezone: "UTC"
   default_kernel: "kernel-core"
   update_default_kernel: true
 
   systemd:
     machine_id_uninitialized: true
+
+  time:
+    timezone: "UTC"
 
 content:
   packages:

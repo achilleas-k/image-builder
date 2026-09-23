@@ -1,0 +1,204 @@
+---
+names: ["ami", "aws"]
+filename: image.raw
+mime_type: application/octet-stream
+bootable: true
+default_size: 10 GiB
+exports: [image]
+
+partition_table:
+  architecture:
+    # NOTE: overriding whole PT because vm-noboot-pt defines a partition table
+    # UUID that we don't want here.
+    # If we collapse PTs to a single one instead of indexing by architecture,
+    # this would be a simpler problem to solve.
+    x86_64:
+      type: gpt
+      partitions:
+        - size: 1 MiB
+          bootable: true
+          type: &bios_boot_partition_guid 21686148-6449-6E6F-744E-656564454649
+        - &default_partition_table_part_efi
+          size: 200 MiB
+          type: &efi_system_partition_guid C12A7328-F81F-11D2-BA4B-00A0C93EC93B
+          payload_type: filesystem
+          payload:
+            type: vfat
+            mountpoint: /boot/efi
+            label: ESP
+            fstab_options: defaults,uid=0,gid=0,umask=077,shortname=winnt
+            fstab_freq: 0
+            fstab_passno: 2
+        - &default_partition_table_part_root
+          size: 2 GiB
+          type: &filesystem_data_guid 0FC63DAF-8483-4772-8E79-3D69D8477DE4
+          payload_type: filesystem
+          payload:
+            type: xfs  # TODO: variable set by distro
+            label: root
+            mountpoint: /
+            fstab_options: defaults
+            fstab_freq: 0
+            fstab_passno: 0
+    aarch64: &default_partition_table_aarch64
+      uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
+      type: gpt
+      partitions:
+        - *default_partition_table_part_efi
+        - *default_partition_table_part_root
+    ppc64le:
+      uuid: '0x14fc63d2'
+      type: dos
+      partitions:
+        - size: 4 MiB
+          bootable: true
+          type: &prep_partition_dosid '41'
+        - &default_partition_table_part_boot_ppc64le
+          size: 2 GiB
+          payload_type: filesystem
+          payload:
+            type: xfs
+            mountpoint: /boot
+            label: boot
+            fstab_options: defaults
+            fstab_freq: 0
+            fstab_passno: 0
+        - &default_partition_table_part_root_ppc64le
+          size: 2 GiB
+          payload_type: filesystem
+          payload:
+            type: xfs
+            mountpoint: /
+            fstab_options: defaults
+            fstab_freq: 0
+            fstab_passno: 0
+    s390x:
+      uuid: '0x14fc63d2'
+      type: dos
+      partitions:
+        - *default_partition_table_part_boot_ppc64le
+        - <<: *default_partition_table_part_root_ppc64le
+          bootable: true
+    riscv64: *default_partition_table_aarch64
+
+content:
+  packages:
+    sets:
+      os:
+        include:
+          - "@core"
+          - "chrony"
+          - "cloud-init"
+          - "cloud-utils-growpart"
+          - "dhcpcd"
+          - "dracut-config-generic"
+          - "kdump-utils"
+          - "langpacks-en"
+          - "NetworkManager-cloud-setup"
+          - "redhat-release"
+          - "redhat-release-eula"
+          - "rsync"
+          - "system-reinstall-bootc"
+          - "tar"
+          - "tuned"
+          - "yum-utils"
+        exclude:
+          - "aic94xx-firmware"
+          - "alsa-firmware"
+          - "alsa-tools-firmware"
+          - "biosdevname"
+          - "firewalld"
+          - "iprutils"
+          - "ivtv-firmware"
+          - "iwl1000-firmware"
+          - "iwl100-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl3945-firmware"
+          - "iwl4965-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6000-firmware"
+          - "iwl6000g2a-firmware"
+          - "iwl6000g2b-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          - "libertas-sd8686-firmware"
+          - "libertas-sd8787-firmware"
+          - "libertas-usb8388-firmware"
+          - "plymouth"
+          # RHBZ#2064087
+          - "dracut-config-rescue"
+          # RHBZ#2075815
+          - "qemu-guest-agent"
+
+system:
+  kernel_options:
+    - console=tty0
+    - console=ttyS0,115200n8
+    - nvme_core.io_timeout=4294967295
+
+  systemd:
+    default_target: "multi-user.target"
+    services:
+      enable:
+        - sshd
+        - NetworkManager
+        - nm-cloud-setup.service
+        - nm-cloud-setup.timer
+        - cloud-init
+        - cloud-init-local
+        - cloud-config
+        - cloud-final
+        - reboot.target
+        - tuned
+    logind:
+      configs:
+        - filename: 00-getty-fixes.conf
+          config:
+            NAutoVTs: 0
+    dropins:
+      # RHBZ#1822863
+      - unit: "nm-cloud-setup.service"
+        dropin: "10-rh-enable-for-ec2.conf"
+        config:
+          service:
+            environment:
+              - key: "NM_CLOUD_SETUP_EC2"
+                value: "yes"
+
+  keyboard:
+    keymap: "us"
+    layouts: ["us"]
+
+  modprobe:
+    - filename: "blacklist-nouveau.conf"
+      commands:
+        - command: blacklist
+          modulename: "nouveau"
+    - filename: "blacklist-amdgpu.conf"
+      commands:
+        - command: blacklist
+          modulename: "amdgpu"
+    # https://issues.redhat.com/browse/RHEL-71926
+    - filename: "blacklist-i2c_piix4.conf"
+      commands:
+        - command: blacklist
+          modulename: "i2c_piix4"
+
+  network:
+    enabled: true
+    no_zero_conf: true
+
+  cloud_init:
+    - filename: "00-rhel-default-user.cfg"
+      config:
+        system_info:
+          default_user:
+            name: "ec2-user"
+
+  sshd:
+    password_authentication: false

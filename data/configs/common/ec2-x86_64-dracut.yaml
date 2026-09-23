@@ -1,0 +1,9 @@
+---
+system:
+  init:
+    dracut:
+      - filename: "ec2.conf"
+        config:
+          add_drivers:
+            - "nvme"
+            - "xen-blkfront"
