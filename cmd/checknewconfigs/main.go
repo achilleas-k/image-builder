@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
+	"slices"
 
 	"github.com/osbuild/blueprint/pkg/blueprint"
 	"github.com/osbuild/image-builder/internal/common"
@@ -14,6 +16,8 @@ import (
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 )
 
+const diffpath = "./diff/"
+
 type ConfigMapping struct {
 	layers    []string
 	distro    string
@@ -21,31 +25,39 @@ type ConfigMapping struct {
 	imageType string
 }
 
-func checkerr(err error) {
+func check(err error) {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "E: %s\n", err)
 		os.Exit(1)
 	}
 }
 
-func jsonPrint(thingie any, filename string) {
+func jsonMarshal(thingie any) []byte {
 	c, err := json.MarshalIndent(thingie, "", "  ")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "E: %s\n", err)
-		os.Exit(1)
+	check(err)
+	return c
+}
+
+func save(data []byte, filename string) {
+	os.Remove(filename)
+	check(os.WriteFile(filename, data, 0600))
+}
+
+func compare(converted, orig manifest.OSBuildManifest, name string) {
+	fmt.Printf("Checking %s: ", name)
+	if slices.Compare(converted, orig) == 0 {
+		fmt.Println("OK")
+		return
 	}
 
-	_ = os.Remove(filename) // don't care if it fails
+	fmt.Printf("DIFFER -> Saving to %s\n", diffpath)
 
-	if err := os.WriteFile(filename, c, 0600); err != nil {
-		fmt.Fprintf(os.Stderr, "E: %s\n", err)
-		os.Exit(1)
-	}
-
+	os.MkdirAll(diffpath, 0700)
+	save(jsonMarshal(converted), filepath.Join(diffpath, name+".new.json"))
+	save(jsonMarshal(orig), filepath.Join(diffpath, name+".old.json"))
 }
 
 func main() {
-
 	configMappings := []ConfigMapping{
 		{
 			layers: []string{
@@ -69,27 +81,24 @@ func main() {
 		},
 	}
 
-	for idx, mapping := range configMappings {
+	for _, mapping := range configMappings {
 		config, err := defs.Load(mapping.layers...)
-		checkerr(err)
+		check(err)
 
 		fedora, err := defs.New(mapping.distro)
-		checkerr(err)
+		check(err)
 
 		x86, err := fedora.GetArch(mapping.arch)
-		checkerr(err)
+		check(err)
 
 		qcow2, err := x86.GetImageType(mapping.imageType)
-		checkerr(err)
+		check(err)
 
 		converted, err := defs.ImageTypeFromConfig(config, qcow2)
-		checkerr(err)
+		check(err)
 
 		basename := fmt.Sprintf("%s-%s-%s", mapping.distro, mapping.arch, mapping.imageType)
-
-		jsonPrint(doManifest(converted), basename+".new.json")
-		jsonPrint(doManifest(qcow2), basename+".old.json")
-		fmt.Printf("[%02d] %s OK\n", idx, basename)
+		compare(doManifest(converted), doManifest(qcow2), basename)
 	}
 }
 
@@ -104,15 +113,15 @@ func doManifest(imgType distro.ImageType) manifest.OSBuildManifest {
 	}
 
 	mf, _, err := imgType.Manifest(bp, options, repos, common.ToPtr(int64(99)))
-	checkerr(err)
+	check(err)
 
 	archName := imgType.Arch().Name()
 	depsolvedSets, err := manifestmock.Depsolve(common.Must(mf.GetPackageSetChains()), archName, nil, false)
-	checkerr(err)
+	check(err)
 	containerSpecs := manifestmock.ResolveContainers(mf.GetContainerSourceSpecs())
 	commitSpecs := manifestmock.ResolveCommits(mf.GetOSTreeSourceSpecs())
 	flatpakSpecs := manifestmock.ResolveFlatpaks(mf.GetFlatpakSourceSpecs())
 	mfs, err := mf.Serialize(depsolvedSets, containerSpecs, commitSpecs, flatpakSpecs, nil)
-	checkerr(err)
+	check(err)
 	return mfs
 }
