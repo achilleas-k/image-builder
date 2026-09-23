@@ -19,8 +19,8 @@ type BuildConfig struct {
 	Filename       string          `yaml:"filename,omitempty"`
 	MIMEType       string          `yaml:"mime_type,omitempty"`
 	Bootable       bool            `yaml:"bootable,omitempty"`
-	DefaultSize    string          `yaml:"default_size,omitempty"`
-	ImageFunc      string          `yaml:"image_func,omitempty"`
+	DefaultSize    datasizes.Size  `yaml:"default_size,omitempty"`
+	ImageFunc      imageFunc       `yaml:"image_func,omitempty"`
 	Exports        []string        `yaml:"exports,omitempty"`
 	Blueprint      BlueprintConfig `yaml:"blueprint,omitempty"`
 	Content        ContentConfig   `yaml:"content,omitempty"`
@@ -45,13 +45,8 @@ type ContentConfig struct {
 }
 
 type PackagesConfig struct {
-	InstallWeakDeps bool                  `yaml:"install_weak_deps,omitempty"`
-	Sets            map[string]PackageSet `yaml:"sets,omitempty"`
-}
-
-type PackageSet struct {
-	Include []string `yaml:"include,omitempty"`
-	Exclude []string `yaml:"exclude,omitempty"`
+	InstallWeakDeps bool                        `yaml:"install_weak_deps,omitempty"`
+	Sets            map[string]rpmmd.PackageSet `yaml:"sets,omitempty"`
 }
 
 type SystemConfig struct {
@@ -66,7 +61,7 @@ type SystemConfig struct {
 }
 
 type PartitionTables struct {
-	RequiredPartitionSizes map[string]string              `yaml:"required_partition_sizes,omitempty"`
+	RequiredPartitionSizes map[string]datasizes.Size      `yaml:"required_partition_sizes,omitempty"`
 	Architecture           map[string]disk.PartitionTable `yaml:"architecture,omitempty"`
 }
 
@@ -125,10 +120,6 @@ func Load(paths ...string) (BuildConfig, error) {
 
 func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distro.ImageType, error) {
 	bf := borrowFrom.(*imageType)
-	partSizes := make(map[string]datasizes.Size, len(config.PartitionTable.RequiredPartitionSizes))
-	for path, sizeStr := range config.PartitionTable.RequiredPartitionSizes {
-		partSizes[path] = convertSize(sizeStr)
-	}
 
 	pt := disk.PartitionTable(config.PartitionTable.Architecture[config.Architecture])
 
@@ -147,9 +138,9 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 		filename:               config.Filename,
 		mimeType:               config.MIMEType,
 		bootable:               config.Bootable,
-		defaultSize:            convertSize(config.DefaultSize),
+		defaultSize:            config.DefaultSize,
 		exports:                config.Exports,
-		requiredPartitionSizes: partSizes,
+		requiredPartitionSizes: config.PartitionTable.RequiredPartitionSizes,
 		partitionTable:         &pt,
 		imageConfig: distro.ImageConfig{
 			KernelOptions:          config.System.KernelOptions,
@@ -188,4 +179,63 @@ func convertSize(s string) datasizes.Size {
 		panic(err)
 	}
 	return *size
+}
+
+// stupid wrapper to make calls less visible and focus on the mapping
+func v[T any](p *T) T {
+	return common.ValueOrEmpty(p)
+}
+
+func NewConfig(it *imageType) (BuildConfig, error) {
+
+	bc := BuildConfig{
+		Names:       append([]string{it.name}, it.nameAliases...),
+		Filename:    it.filename,
+		MIMEType:    it.mimeType,
+		Bootable:    it.bootable,
+		DefaultSize: it.defaultSize,
+		ImageFunc:   it.image,
+		Exports:     it.exports,
+		Blueprint: BlueprintConfig{
+			SupportedOptions: it.blueprint.SupportedOptions,
+		},
+		Content: ContentConfig{
+			Packages: PackagesConfig{
+				InstallWeakDeps: v(it.installWeakDeps),
+				Sets:            it.packageSets,
+			},
+		},
+		System: SystemConfig{
+			KernelOptions:          it.imageConfig.KernelOptions,
+			DefaultOSCAPDatastream: it.imageConfig.DefaultOSCAPDatastream,
+			Locale:                 v(it.imageConfig.Locale),
+			Timezone:               v(it.imageConfig.Timezone),
+			DefaultKernel:          v(it.imageConfig.DefaultKernel),
+			UpdateDefaultKernel:    v(it.imageConfig.UpdateDefaultKernel),
+			Hostname:               v(it.imageConfig.Hostname),
+			Systemd: SystemdConfig{
+				DefaultTarget:          v(it.imageConfig.DefaultTarget),
+				MachineIdUninitialized: v(it.imageConfig.MachineIdUninitialized),
+				Services: SystemdServicesConfig{
+					Enable:  it.imageConfig.EnabledServices,
+					Disable: it.imageConfig.DisabledServices,
+					Mask:    it.imageConfig.MaskedServices,
+				},
+			},
+		},
+		PartitionTable: PartitionTables{
+			RequiredPartitionSizes: it.requiredPartitionSizes,
+			Architecture: map[string]disk.PartitionTable{
+				it.arch.Name(): v(it.partitionTable),
+			},
+		},
+		DistributionName: it.arch.distro.Name(),
+		Depsolver:        "osbuild-depsolve-dnf",
+		PackageManager:   "rpm",
+		UEFIVendor:       it.platform.GetUEFIVendor(),
+		Architecture:     it.arch.Name(),
+		Bootloader:       it.platform.GetBootloader().String(),
+	}
+
+	return bc, nil
 }

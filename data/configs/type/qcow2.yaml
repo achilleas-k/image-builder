@@ -4,7 +4,6 @@ filename: disk.qcow2
 mime_type: application/x-qemu-disk
 bootable: true
 default_size: 5 GiB
-image_func: disk
 exports: [qcow2]
 
 blueprint:
