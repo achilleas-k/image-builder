@@ -52,9 +52,10 @@ func compare(converted, orig manifest.OSBuildManifest, name string) {
 
 	fmt.Printf("DIFFER -> Saving to %s\n", diffpath)
 
-	os.MkdirAll(diffpath, 0700)
-	save(jsonMarshal(converted), filepath.Join(diffpath, name+".new.json"))
-	save(jsonMarshal(orig), filepath.Join(diffpath, name+".old.json"))
+	savepath := filepath.Join(diffpath, name)
+	os.MkdirAll(savepath, 0700)
+	save(jsonMarshal(converted), filepath.Join(savepath, "new.json"))
+	save(jsonMarshal(orig), filepath.Join(savepath, "old.json"))
 }
 
 func main() {
