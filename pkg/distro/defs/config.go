@@ -7,9 +7,11 @@ import (
 	"slices"
 
 	"github.com/osbuild/image-builder/internal/common"
+	"github.com/osbuild/image-builder/pkg/arch"
 	"github.com/osbuild/image-builder/pkg/datasizes"
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/platform"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
 	"go.yaml.in/yaml/v3"
 )
@@ -238,4 +240,70 @@ func NewConfig(it *imageType) (BuildConfig, error) {
 	}
 
 	return bc, nil
+}
+
+// PLATFORM INTERFACE
+func (bc BuildConfig) GetArch() arch.Arch {
+	a, err := arch.FromString(bc.Architecture)
+	common.PanicOnError(err)
+	return a
+}
+
+func (bc BuildConfig) GetImageFormat() platform.ImageFormat {
+	// TODO: add to BuildConfig
+	return platform.FORMAT_UNSET
+}
+
+func (bc BuildConfig) GetQCOW2Compat() string {
+	// TODO: add to BuildConfig
+	return ""
+}
+
+func (bc BuildConfig) GetBIOSPlatform() string {
+	// TODO: add to BuildConfig
+	return ""
+}
+
+func (bc BuildConfig) GetUEFIVendor() string {
+	return bc.UEFIVendor
+}
+
+func (bc BuildConfig) GetExtraUEFIArchitectures() []string {
+	// TODO: add to BuildConfig
+	return nil
+}
+
+func (bc BuildConfig) GetZiplSupport() bool {
+	return false
+}
+
+func (bc BuildConfig) GetPackages() []string {
+	return nil
+}
+
+func (bc BuildConfig) GetBuildPackages() []string {
+	return nil
+}
+
+func (bc BuildConfig) GetBootFiles() []platform.BootFile {
+	return nil
+}
+func (bc BuildConfig) GetBootloader() platform.Bootloader {
+	bootloader, err := platform.FromString(bc.Bootloader)
+	common.PanicOnError(err)
+	return bootloader
+}
+
+func (bc BuildConfig) GetFIPSMenu() bool {
+	// TODO: add to BuildConfig
+	return false
+}
+
+// ENVIRONMENT INTERFACE
+func (bc BuildConfig) GetRepos() []rpmmd.RepoConfig {
+	return nil
+}
+
+func (bc BuildConfig) GetServices() []string {
+	return nil
 }
