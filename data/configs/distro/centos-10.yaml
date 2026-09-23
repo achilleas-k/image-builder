@@ -1,21 +1,24 @@
 ---
-distribution_name: "fedora"
+distribution_name: "centos"
 depsolver: "dnf"  # osbuild-depsolve-dnf
 package_manager: "rpm"
-uefi_vendor: "fedora"
+uefi_vendor: "redhat"
 
 system:
   default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
-  hostname: "localhost.localdomain"
   locale: "C.UTF-8"
-  default_kernel: "kernel-core"
+  default_kernel: "kernel"
   update_default_kernel: true
-
-  systemd:
-    machine_id_uninitialized: true
 
   time:
     timezone: "UTC"
+    leapsectz: ""
+    ntp_servers:
+      - hostname: "169.254.169.123"
+        minpoll: 4
+        maxpoll: 4
+        iburst: true
+        prefer: true
 
 content:
   packages:
