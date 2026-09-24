@@ -120,6 +120,7 @@ func Load(paths ...string) (BuildConfig, error) {
 	return config, nil
 }
 
+// ImageTypeFromConfig is a temporary conversion function for verifying image configuration parity.
 func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distro.ImageType, error) {
 	bf := borrowFrom.(*imageType)
 
