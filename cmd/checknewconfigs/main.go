@@ -100,6 +100,19 @@ func main() {
 			arch:      "x86_64",
 			imageType: "ami",
 		},
+		{
+			layers: []string{
+				"distro/centos-10.yaml",
+				"platform/aarch64-base.yaml",
+				"common/customizations-for-disk.yaml",
+				"common/cloud-init-services.yaml",
+				"common/vm-noboot-pt.yaml",
+				"type/el-ami.yaml",
+			},
+			distro:    "centos-10",
+			arch:      "aarch64",
+			imageType: "ami",
+		},
 	}
 
 	for _, mapping := range configMappings {
