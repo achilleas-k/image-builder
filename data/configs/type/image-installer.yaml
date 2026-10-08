@@ -1,0 +1,301 @@
+---
+names: [image-installer]
+filename: installer.iso
+mime_type: application/x-iso9660-image
+bootable: true
+exports: [bootiso]
+function: "image-installer"
+
+iso:
+  label: "CentOS-Stream-10-BaseOS-x86_64"
+  rootfs:
+    type: "squashfs"
+    excludes:
+      - "boot/efi/.*"
+      - "boot/grub2/.*"
+      - "boot/config-.*"
+      - "boot/initramfs-.*"
+      - "boot/loader/.*"
+      - "boot/symvers-.*"
+      - "boot/System.map-.*"
+      - "usr/lib/sysimage/rpm/.*"
+      - "var/lib/rpm/.*"
+      - "var/lib/yum/.*"
+      - "var/lib/dnf/.*"
+  grub2:
+    default_menu_entry: 1
+  boot_type: "grub2"
+
+installer:
+  anaconda:
+    enabled_modules:
+      - "org.fedoraproject.Anaconda.Modules.Network"
+      - "org.fedoraproject.Anaconda.Modules.Payloads"
+      - "org.fedoraproject.Anaconda.Modules.Runtime"
+      - "org.fedoraproject.Anaconda.Modules.Storage"
+  dracut:
+    add_modules:
+      - "nvdimm"  # non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
+      - "net-lib"
+    add_drivers:
+      - "ipmi_devintf"
+      - "ipmi_msghandler"
+  lorax:
+    logos_package: redhat-logos
+    release_package: redhat-release
+    template_package: lorax-templates-rhel
+    templates:
+      - path: 80-rhel/runtime-postinstall.tmpl
+      - path: 80-rhel/runtime-cleanup.tmpl
+        after_dracut: true
+  install_weak_deps: true
+
+content:
+  packages:  # TODO: should only describe OS / payload packages
+    sets:
+      installer:  # TODO: move under installer!
+        # NOTE: Moving installer packages under the installer section of the config gives us a few benefits:
+        #   - Package set names can be arbitrary.  No more magic strings!
+        #   - The location of the package set (content, installer, etc)
+        #   determines its purpose (pipeline).
+        #   - The package set names are there to aide in the merging of lists,
+        #   functionally speaking.  But they can also serve as a way to trace
+        #   the source component of each set of packages.  Like tagging the
+        #   origin of each package name that ends up in the OS or installer.
+        #   - It also makes it nicer to have named package sets that can be
+        #   overridden.  For example, imagine the distro-wide component defines
+        #   the default release package for all images in the distribution.  So
+        #   every image config that uses that gets a package set called
+        #   'release' in the 'content' block.  But if a specific image type
+        #   wants to override it, it can simply redefine the 'release' package
+        #   set inside the 'content' block, instead of adding it to the 'os'
+        #   package set.  This does mean that package set names become
+        #   meaningful, but the meaning is limited within the collection of
+        #   yaml components that define it.  The semantics of the package set
+        #   names does not leak from a collection of config components (yaml
+        #   files) into the pipeline generators (the "core logic" in code).
+        include:
+          - "anaconda-dracut"
+          - "curl"
+          - "dracut-config-generic"
+          - "dracut-network"
+          - "hostname"
+          - "iwl100-firmware"
+          - "iwl1000-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          - "kernel"
+          - "less"
+          - "nfs-utils"
+          - "openssh-clients"
+          - "ostree"
+          - "plymouth"
+          - "prefixdevname"
+          - "rng-tools"
+          - "rpcbind"
+          - "selinux-policy-targeted"
+          - "systemd"
+          - "tar"
+          - "xfsprogs"
+          - "xz"
+          - "@hardware-support"
+          - "alsa-firmware"
+          - "alsa-tools-firmware"
+          - "anaconda"
+          - "anaconda-dracut"
+          - "anaconda-install-img-deps"
+          - "anaconda-widgets"
+          - "audit"
+          - "bind-utils"
+          - "bzip2"
+          - "cryptsetup"
+          - "curl"
+          - "dbus-x11"
+          - "default-fonts-core-sans"
+          - "default-fonts-other-sans"
+          - "dejavu-sans-fonts"
+          - "dejavu-sans-mono-fonts"
+          - "device-mapper-persistent-data"
+          - "dnf"
+          - "dracut-config-generic"
+          - "dracut-network"
+          - "ethtool"
+          - "fcoe-utils"
+          - "ftp"
+          - "gdb-gdbserver"
+          - "glibc-all-langpacks"
+          - "gnome-kiosk"
+          - "google-noto-sans-cjk-ttc-fonts"
+          - "grubby"
+          - "gsettings-desktop-schemas"
+          - "hdparm"
+          - "hexedit"
+          - "hostname"
+          - "initscripts"
+          - "ipmitool"
+          - "iwl1000-firmware"
+          - "iwl100-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6000g2a-firmware"
+          - "iwl6000g2b-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          - "jomolhari-fonts"
+          - "kbd"
+          - "kbd-misc"
+          - "kdump-anaconda-addon"
+          - "kernel"
+          - "less"
+          - "libblockdev-lvm-dbus"
+          - "libibverbs"
+          - "librsvg2"
+          - "linux-firmware"
+          - "lldpad"
+          - "lsof"
+          - "madan-fonts"
+          - "mtr"
+          - "mt-st"
+          - "net-tools"
+          - "nfs-utils"
+          - "nmap-ncat"
+          - "nm-connection-editor"
+          - "nss-tools"
+          - "openssh-clients"
+          - "openssh-server"
+          # the package is not yet available on c10s / el10
+          # "oscap-anaconda-addon"
+          - "ostree"
+          - "pciutils"
+          - "perl-interpreter"
+          - "pigz"
+          - "plymouth"
+          - "prefixdevname"
+          - "python3-pyatspi"
+          - "rdma-core"
+          - "rng-tools"
+          - "rpcbind"
+          - "rpm-ostree"
+          - "rsync"
+          - "rsyslog"
+          - "selinux-policy-targeted"
+          - "sg3_utils"
+          - "sil-padauk-fonts"
+          - "smartmontools"
+          - "spice-vdagent"
+          - "strace"
+          - "systemd"
+          - "tar"
+          - "udisks2"
+          - "udisks2-iscsi"
+          - "usbutils"
+          - "vim-minimal"
+          - "volume_key"
+          - "wget"
+          - "xfsdump"
+          - "xfsprogs"
+          - "xz"
+          # Extra packages that are required by the dracut stage of all installers.
+          # These are weak deps of other packages in the list above, but lets be
+          # explicit about what we need and not rely on the weak deps. Relying
+          # on hard-dependencies for other modules is OK for now.
+          #
+          # TODO: add these dynamically based on the modules enabled by each
+          # pipeline.
+          - "mdadm"
+          - "nss-softokn"
+
+          # TODO: x86_64 only
+          - "biosdevname"
+          - "dmidecode"
+          - "memtest86+"
+
+          # anaconda boot x86_64
+          - "efibootmgr"
+          - "grub2-efi-x64"
+          - "grub2-efi-x64-cdboot"
+          - "grub2-pc"
+          - "grub2-pc-modules"
+          - "grub2-tools-efi"
+          - "shim-x64"
+          - "syslinux"
+          - "syslinux-nonlinux"
+
+          - "redhat-release-eula"
+      os:
+        include:
+          - "@core"
+          - chrony
+          - cockpit-system
+          - cockpit-ws
+          - dnf-utils
+          - dosfstools
+          - firewalld
+          - iwl1000-firmware
+          - iwl100-firmware
+          - iwl105-firmware
+          - iwl135-firmware
+          - iwl2000-firmware
+          - iwl2030-firmware
+          - iwl3160-firmware
+          - iwl5000-firmware
+          - iwl5150-firmware
+          - iwl6000g2a-firmware
+          - iwl6000g2b-firmware
+          - iwl6050-firmware
+          - iwl7260-firmware
+          - lvm2
+          - net-tools
+          - nfs-utils
+          - oddjob
+          - oddjob-mkhomedir
+          - policycoreutils
+          - psmisc
+          - python3-jsonschema
+          - qemu-guest-agent
+          - redhat-release
+          - rsync
+          - tar
+          - tcpdump
+          - tuned
+
+
+          # distro_build_pkgset
+          - "dnf"
+          - "dosfstools"
+          - "e2fsprogs"
+          - "glibc"
+          - "lvm2"
+          - "policycoreutils"
+          - "python3-iniparse"
+          - "qemu-img"
+          - "selinux-policy-targeted"
+          - "systemd"
+          - "tar"
+          - "xfsprogs"
+          - "xz"
+        exclude:
+          - dracut-config-rescue
+
+system:
+  systemd:
+
+  time:
+    ntp_servers:
+    leapsectz: null
+
+  network:
+    enabled: true
+    no_zero_conf: true

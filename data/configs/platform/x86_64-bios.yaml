@@ -1,0 +1,25 @@
+---
+architecture: "x86_64"
+bootloader: "grub2"
+content:
+  packages:
+    sets:
+      bios:
+        include:
+          - "dracut-config-generic"
+          - "grub2-pc"
+          - "amd-gpu-firmware"
+          - "amd-ucode-firmware"
+          - "atheros-firmware"
+          - "brcmfmac-firmware"
+          - "intel-gpu-firmware"
+          - "iwlegacy-firmware"
+          - "iwlwifi-dvm-firmware"
+          - "iwlwifi-mvm-firmware"
+          - "libertas-firmware"
+          - "linux-firmware"
+          - "mt7xxx-firmware"
+          - "nvidia-gpu-firmware"
+          - "nxpwireless-firmware"
+          - "realtek-firmware"
+          - "tiwilink-firmware"
