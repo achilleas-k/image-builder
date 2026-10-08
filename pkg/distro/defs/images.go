@@ -88,7 +88,8 @@ func osCustomizations(t *imageType, osPackageSet rpmmd.PackageSet, options distr
 		osc.Hostonly = *imageConfig.Hostonly
 	}
 
-	if !t.bootISO {
+	if !t.bootISO { // NOTE: this seems to be the only place where we consult the boot_iso flag. Seems kinda silly. Maybe we don't need a flag to identify installers and ISOs. I think the option should be describing what it does and not have secondary effects.
+
 		// don't put users and groups in the payload of an installer
 		// add them via kickstart instead
 		groups, err := c.GetGroups()
