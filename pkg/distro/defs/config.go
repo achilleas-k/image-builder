@@ -23,11 +23,12 @@ type BuildConfig struct {
 	MIMEType       string          `yaml:"mime_type,omitempty"`
 	Bootable       bool            `yaml:"bootable,omitempty"`
 	DefaultSize    datasizes.Size  `yaml:"default_size,omitempty"`
-	ImageFunc      imageFunc       `yaml:"image_func,omitempty"`
 	Exports        []string        `yaml:"exports,omitempty"`
 	Blueprint      BlueprintConfig `yaml:"blueprint,omitempty"`
 	Content        ContentConfig   `yaml:"content,omitempty"`
 	System         SystemConfig    `yaml:"system,omitempty"`
+	ISO            ISOConfig       `yaml:"iso,omitempty"`
+	Installer      InstallerConfig `yaml:"installer,omitempty"`
 	PartitionTable PartitionTables `yaml:"partition_table,omitempty"`
 
 	DistributionName string `yaml:"distribution_name"`
@@ -37,6 +38,8 @@ type BuildConfig struct {
 
 	Architecture string `yaml:"architecture"`
 	Bootloader   string `yaml:"bootloader"`
+
+	FunctionName string `yaml:"function,omitempty"`
 }
 
 type BlueprintConfig struct {
@@ -160,6 +163,7 @@ type Dracut struct {
 
 type DracutConfig struct {
 	AddDrivers []string `yaml:"add_drivers,omitempty"`
+	AddModules []string `yaml:"add_modules,omitempty"`
 }
 
 func (dracuts Dracuts) stageOptions() []*osbuild.DracutConfStageOptions {
@@ -170,7 +174,7 @@ func (dracuts Dracuts) stageOptions() []*osbuild.DracutConfStageOptions {
 			Config: osbuild.DracutConfigFile{
 				Compress:       "",
 				Modules:        []string{},
-				AddModules:     []string{},
+				AddModules:     dracut.Config.AddModules,
 				OmitModules:    []string{},
 				Drivers:        []string{},
 				AddDrivers:     dracut.Config.AddDrivers,
@@ -422,6 +426,30 @@ type SystemdDropinService struct {
 	Environment []KeyValue `yaml:"environment,omitempty"`
 }
 
+type ISOConfig struct {
+	Label  string          `yaml:"label,omitempty"`
+	Rootfs ISORootfsConfig `yaml:"rootfs,omitempty"`
+	Grub2  Grub2Config     `yaml:"grub2,omitempty"`
+}
+
+type ISORootfsConfig struct {
+	Type     string   `yaml:"type,omitempty"`
+	Excludes []string `yaml:"excludes,omitempty"`
+}
+
+type InstallerConfig struct {
+	Anaconda AnacondaConfig `yaml:"anaconda,omitempty"`
+	Dracut   DracutConfig   `yaml:"dracut,omitempty"`
+}
+
+type AnacondaConfig struct {
+	EnabledModules []string `yaml:"enabled_modules,omitempty"`
+}
+
+type Grub2Config struct {
+	DefaultMenuEntry int `yaml:"default_menu_entry,omitempty"`
+}
+
 type KeyValue struct {
 	Key   string `yaml:"key"`
 	Value string `yaml:"value"`
@@ -459,6 +487,16 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 		}
 	}
 
+	var imageFunction imageFunc
+	switch config.FunctionName {
+	case "disk":
+		imageFunction = diskImage
+	case "image-installer":
+		imageFunction = imageInstallerImage
+	default:
+		imageFunction = diskImage
+	}
+
 	// NOTE .stageOptions() methods are temporary, for serving this conversion only
 	it := imageType{
 		name:                   config.Names[0],
@@ -471,6 +509,7 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 		exports:                config.Exports,
 		requiredPartitionSizes: config.PartitionTable.RequiredPartitionSizes,
 		partitionTable:         &pt,
+		isoLabel:               config.ISO.Label,
 		imageConfig: distro.ImageConfig{
 			KernelOptions:          config.System.KernelOptions,
 			Locale:                 &config.System.Locale,
@@ -497,6 +536,12 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 			SshdConfig:    config.System.Sshd.stageOptions(),
 			SystemdDropin: config.System.Systemd.Dropins.stageOptions(),
 		},
+		installerConfig: distro.InstallerConfig{
+			EnabledAnacondaModules:  config.Installer.Anaconda.EnabledModules,
+			AdditionalDracutModules: config.Installer.Dracut.AddModules,
+			AdditionalDrivers:       config.Installer.Dracut.AddDrivers,
+			DefaultMenu:             &config.ISO.Grub2.DefaultMenuEntry,
+		},
 
 		platform: bf.platform,
 
@@ -506,7 +551,7 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 			// always be implicitly supported by all image types.
 			SupportedOptions: append(slices.Clone(config.Blueprint.SupportedOptions), "name", "version", "description"),
 		},
-		image: diskImage,
+		image: imageFunction,
 
 		packageSets: packageSets,
 	}
@@ -535,7 +580,6 @@ func NewConfig(it *imageType) (BuildConfig, error) {
 		MIMEType:    it.mimeType,
 		Bootable:    it.bootable,
 		DefaultSize: it.defaultSize,
-		ImageFunc:   it.image,
 		Exports:     it.exports,
 		Blueprint: BlueprintConfig{
 			SupportedOptions: it.blueprint.SupportedOptions,

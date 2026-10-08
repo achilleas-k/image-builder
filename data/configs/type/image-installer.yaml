@@ -1,0 +1,223 @@
+---
+names: [image-installer]
+filename: installer.iso
+mime_type: application/x-iso9660-image
+bootable: true
+exports: [bootiso]
+function: "image-installer"
+
+iso:
+  label: "Unkown"
+
+installer:
+  anaconda:
+    enabled_modules:
+      - "org.fedoraproject.Anaconda.Modules.Network"
+      - "org.fedoraproject.Anaconda.Modules.Payloads"
+      - "org.fedoraproject.Anaconda.Modules.Runtime"
+      - "org.fedoraproject.Anaconda.Modules.Storage"
+  dracut:
+    add_modules:
+      - "nvdimm"  # non-volatile DIMM firmware (provides nfit, cuse, and nd_e820)
+      - "net-lib"
+    add_drivers:
+      - "ipmi_devintf"
+      - "ipmi_msghandler"
+
+content:
+  packages:
+    sets:
+      installer:
+        include:
+          - "anaconda-dracut"
+          - "curl"
+          - "dracut-config-generic"
+          - "dracut-network"
+          - "hostname"
+          - "iwl100-firmware"
+          - "iwl1000-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          - "kernel"
+          - "less"
+          - "nfs-utils"
+          - "openssh-clients"
+          - "ostree"
+          - "plymouth"
+          - "prefixdevname"
+          - "rng-tools"
+          - "rpcbind"
+          - "selinux-policy-targeted"
+          - "systemd"
+          - "tar"
+          - "xfsprogs"
+          - "xz"
+          - "@hardware-support"
+          - "alsa-firmware"
+          - "alsa-tools-firmware"
+          - "anaconda"
+          - "anaconda-dracut"
+          - "anaconda-install-img-deps"
+          - "anaconda-widgets"
+          - "audit"
+          - "bind-utils"
+          - "bzip2"
+          - "cryptsetup"
+          - "curl"
+          - "dbus-x11"
+          - "default-fonts-core-sans"
+          - "default-fonts-other-sans"
+          - "dejavu-sans-fonts"
+          - "dejavu-sans-mono-fonts"
+          - "device-mapper-persistent-data"
+          - "dnf"
+          - "dracut-config-generic"
+          - "dracut-network"
+          - "ethtool"
+          - "fcoe-utils"
+          - "ftp"
+          - "gdb-gdbserver"
+          - "glibc-all-langpacks"
+          - "gnome-kiosk"
+          - "google-noto-sans-cjk-ttc-fonts"
+          - "grubby"
+          - "gsettings-desktop-schemas"
+          - "hdparm"
+          - "hexedit"
+          - "hostname"
+          - "initscripts"
+          - "ipmitool"
+          - "iwl1000-firmware"
+          - "iwl100-firmware"
+          - "iwl105-firmware"
+          - "iwl135-firmware"
+          - "iwl2000-firmware"
+          - "iwl2030-firmware"
+          - "iwl3160-firmware"
+          - "iwl5000-firmware"
+          - "iwl5150-firmware"
+          - "iwl6000g2a-firmware"
+          - "iwl6000g2b-firmware"
+          - "iwl6050-firmware"
+          - "iwl7260-firmware"
+          - "jomolhari-fonts"
+          - "kbd"
+          - "kbd-misc"
+          - "kdump-anaconda-addon"
+          - "kernel"
+          - "less"
+          - "libblockdev-lvm-dbus"
+          - "libibverbs"
+          - "librsvg2"
+          - "linux-firmware"
+          - "lldpad"
+          - "lsof"
+          - "madan-fonts"
+          - "mtr"
+          - "mt-st"
+          - "net-tools"
+          - "nfs-utils"
+          - "nmap-ncat"
+          - "nm-connection-editor"
+          - "nss-tools"
+          - "openssh-clients"
+          - "openssh-server"
+          # the package is not yet available on c10s / el10
+          # "oscap-anaconda-addon"
+          - "ostree"
+          - "pciutils"
+          - "perl-interpreter"
+          - "pigz"
+          - "plymouth"
+          - "prefixdevname"
+          - "python3-pyatspi"
+          - "rdma-core"
+          - "rng-tools"
+          - "rpcbind"
+          - "rpm-ostree"
+          - "rsync"
+          - "rsyslog"
+          - "selinux-policy-targeted"
+          - "sg3_utils"
+          - "sil-padauk-fonts"
+          - "smartmontools"
+          - "spice-vdagent"
+          - "strace"
+          - "systemd"
+          - "tar"
+          - "udisks2"
+          - "udisks2-iscsi"
+          - "usbutils"
+          - "vim-minimal"
+          - "volume_key"
+          - "wget"
+          - "xfsdump"
+          - "xfsprogs"
+          - "xz"
+          # Extra packages that are required by the dracut stage of all installers.
+          # These are weak deps of other packages in the list above, but lets be
+          # explicit about what we need and not rely on the weak deps. Relying
+          # on hard-dependencies for other modules is OK for now.
+          #
+          # TODO: add these dynamically based on the modules enabled by each
+          # pipeline.
+          - "mdadm"
+          - "nss-softokn"
+      os:
+        include:
+          - "@core"
+          - chrony
+          - cockpit-system
+          - cockpit-ws
+          - dnf-utils
+          - dosfstools
+          - firewalld
+          - iwl1000-firmware
+          - iwl100-firmware
+          - iwl105-firmware
+          - iwl135-firmware
+          - iwl2000-firmware
+          - iwl2030-firmware
+          - iwl3160-firmware
+          - iwl5000-firmware
+          - iwl5150-firmware
+          - iwl6000g2a-firmware
+          - iwl6000g2b-firmware
+          - iwl6050-firmware
+          - iwl7260-firmware
+          - lvm2
+          - net-tools
+          - nfs-utils
+          - oddjob
+          - oddjob-mkhomedir
+          - policycoreutils
+          - psmisc
+          - python3-jsonschema
+          - qemu-guest-agent
+          - redhat-release
+          - rsync
+          - tar
+          - tcpdump
+          - tuned
+        exclude:
+          - dracut-config-rescue
+          - firewalld
+          - geolite2-city
+          - geolite2-country
+          - plymouth
+
+system:
+  kernel_options:
+    - console=tty1
+    - console=ttyS0,115200n8
+    - earlyprintk=ttyS0
+    - systemd.firstboot=off
+  systemd:
+    default_target: "multi-user.target"
