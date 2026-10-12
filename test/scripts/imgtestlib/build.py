@@ -1,7 +1,7 @@
 import json
 import os
 import tempfile
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from .bootcsource import (bootc_source_from_distro, resolve_bootc_source,
                           resolve_bootc_source_ref)
@@ -9,7 +9,8 @@ from .gitlab import log_section
 from .run import runcmd, runcmd_nc
 from .testenv import get_host_distro, get_osbuild_commit, rng_seed_env
 
-def resolve_bootc_options(config: dict, distro: str, arch: str, image_type: str = None) -> dict:
+
+def resolve_bootc_options(config: dict, distro: str, arch: str, image_type: Optional[str] = None) -> dict:
     bootc = dict(config.get("options", {}).get("bootc", {}))
     if not distro.startswith("bootc-"):
         return bootc
