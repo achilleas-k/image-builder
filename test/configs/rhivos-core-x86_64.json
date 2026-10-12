@@ -1,0 +1,17 @@
+{
+  "name": "rhivos-core-x86_64",
+  "blueprint": {
+    "name": "rhivos-core-x86_64",
+    "description": "RHIVOS images do not use the standard BaseOS and Appstream RHEL repos - Force RHIVOS-Core repo."
+  },
+  "repos": {
+    "force": [
+      {
+        "name": "rhivos-core",
+        "baseurls": [
+          "https://rhivos.auto-toolchain.redhat.com/in-vehicle-os/RHIVOS-2/RHIVOS-2.0-Core/repos/RHIVOS/compose/RHIVOS/x86_64/os/"
+        ]
+      }
+    ]
+  }
+}

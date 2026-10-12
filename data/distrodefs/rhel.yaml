@@ -555,6 +555,14 @@ distros:
         no_bls: true
         install_weak_deps: true
 
+  - &rhivos
+    <<: *rhel10
+    name: "rhivos-{{.MajorVersion}}.{{.MinorVersion}}"
+    match: 'rhivos-2\.[0-9]{1,2}'
+    product: "Red Hat In-Vehicle Operating System"
+    os_version: "2.{{.MinorVersion}}"
+    release_version: 2
+
   # Note that this will not be visible by default because we do not
   # ship with a reporegistry that contains repositories for it. It
   # is used by the pkg/distro/bootc distro to externalize image
