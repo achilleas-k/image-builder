@@ -25,7 +25,7 @@ func isUbi(imgType distro.ImageType) bool {
 	return imgType.Name() == "wsl" || imgType.Name() == "generic-wsl"
 }
 
-var knownKernels = []string{"kernel", "kernel-debug", "kernel-rt", "kernel-uki-virt"}
+var knownKernels = []string{"kernel", "kernel-debug", "kernel-rt", "kernel-uki-virt", "kernel-automotive"}
 
 // Returns the number of known kernels in the package list
 func kernelCount(t *testing.T, imgType distro.ImageType, bp blueprint.Blueprint) int {
