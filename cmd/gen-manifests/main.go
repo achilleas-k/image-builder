@@ -303,10 +303,15 @@ func makeManifestJob(
 		APIType: facts.IBCLI_APITYPE,
 	}
 
-	// Extend the repositories with the custom repositories from the build config
+	// Extend the repositories with the custom repositories from repos.extra in the build config
 	allRepos := slices.Clone(repos)
-	if len(bc.CustomRepos) > 0 {
-		allRepos = append(allRepos, bc.CustomRepos...)
+	if len(bc.Repos.Extra) > 0 {
+		allRepos = append(allRepos, bc.Repos.Extra...)
+	}
+
+	// Replace the repositories if repos.force is set
+	if len(bc.Repos.Force) > 0 {
+		allRepos = slices.Clone(bc.Repos.Force)
 	}
 
 	job := func(msgq chan string) (err error) {

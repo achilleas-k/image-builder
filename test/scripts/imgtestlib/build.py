@@ -31,6 +31,7 @@ def resolve_bootc_options(config: dict, distro: str, arch: str, image_type: str 
     return merged
 
 
+# pylint: disable=too-many-branches
 def config_to_cli_args(config: dict, bootc: dict) -> List[str]:
     args: List[str] = []
 
@@ -62,9 +63,13 @@ def config_to_cli_args(config: dict, bootc: dict) -> List[str]:
     if size := options.get("size"):
         args.append(f"--image-size={size}")
 
-    for repo in config.get("custom_repos", []):
+    for repo in config.get("repos", {}).get("extra", []):
         for url in repo.get("baseurls", []):
             args.append(f"--extra-repo={url}")
+
+    for repo in config.get("repos", {}).get("force", []):
+        for url in repo.get("baseurls", []):
+            args.append(f"--force-repo={url}")
 
     return args
 

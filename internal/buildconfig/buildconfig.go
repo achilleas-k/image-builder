@@ -17,9 +17,15 @@ type BuildConfig struct {
 	Depends   interface{}          `json:"depends,omitempty"` // ignored
 	Solver    *SolverConfig        `json:"solver,omitempty"`
 
-	// CustomRepos is a list of additional repositories that will be used for
-	// depsolving the image package sets.
-	CustomRepos []rpmmd.RepoConfig `json:"custom_repos,omitempty"`
+	Repos struct {
+		// Extra is a list of additional repositories that will be used for
+		// depsolving the image package sets.
+		Extra []rpmmd.RepoConfig `json:"extra,omitempty"`
+
+		// Force is a list of repositories that will replace / override the base
+		// distro repositories.
+		Force []rpmmd.RepoConfig `json:"force,omitempty"`
+	} `json:"repos"`
 }
 
 // SolverConfig is a configuration for the depsolver used by gen-manifests.
