@@ -185,7 +185,8 @@
         "rhel-10*",
         "centos-*",
         "fedora-*",
-        "eln*"
+        "eln*",
+        "rhivos*"
       ],
       "image-types": [
         "ami",
@@ -883,31 +884,6 @@
       "arches": [],
       "image-types": [
         "minimal-raw-xz"
-      ]
-    }
-  },
-  {
-    "path": "./configs/rhivos-x86_64.json",
-    "filters": {
-      "distros": [
-        "rhel-10*"
-      ],
-      "arches": [
-        "x86_64"
-      ],
-      "image-types": [
-        "rhivos-qcow2"
-      ]
-    }
-  },
-  {
-    "path": "./configs/rhivos-core.json",
-    "filters": {
-      "distros": [
-        "rhel-10*"
-      ],
-      "image-types": [
-        "rhivos-core-qcow2"
       ]
     }
   }

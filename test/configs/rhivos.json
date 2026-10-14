@@ -1,7 +1,0 @@
-{
-  "name": "rhivos",
-  "blueprint": {
-    "name": "rhivos-core",
-    "description": "RHIVOS images do not use the standard BaseOS and Appstream RHEL repos - Force RHIVOS repo."
-  }
-}
