@@ -1,69 +1,19 @@
 ---
 distros:
-  - bootstrap_containers:
-      ppc64le: registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest
-      s390x: registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest
-      x86_64: registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest
-    codename: Maipo
-    default_fs_type: xfs
-    defs_path: rhel-7
-    distro_like: rhel-7
-    image_config:
-      default:
-        default_kernel: kernel
-        gpgkey_files:
-          - /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release
-        install_weak_deps: true
-        kernel_options_bootloader: true
-        locale: en_US.UTF-8
-        no_bls: true
-        sysconfig:
-          create_default_network_scripts: true
-          networking: true
-          no_zero_conf: true
-        timezone: America/New_York
-        update_default_kernel: true
-    match: rhel-7\.[0-9]
-    module_platform_id: platform:el7
-    name: rhel-{{.MajorVersion}}.{{.MinorVersion}}
-    os_version: 7.{{.MinorVersion}}
-    product: Red Hat Enterprise Linux
-    release_version: 7
-    runner:
-      build_packages:
-        - glibc
-        - python36
-      name: org.osbuild.rhel{{.MajorVersion}}{{.MinorVersion}}
-    vendor: redhat
-  - bootstrap_containers:
-      aarch64: registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest
-      ppc64le: registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest
-      s390x: registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest
-      x86_64: registry.access.redhat.com/ubi{{.MajorVersion}}/ubi:latest
-    conditions:
+  - &rhivos
+    name: rhivos-{{.MajorVersion}}.{{.MinorVersion}}
+    match: rhivos-2\.[0-9]{1,2}
+    os_version: 2.{{.MinorVersion}}
+    release_version: 2
     default_fs_type: xfs
     defs_path: rhivos-2
     distro_like: rhel-10
+    bootstrap_containers:
+      x86_64: "registry.access.redhat.com/ubi10/ubi:latest"
+      aarch64: "registry.access.redhat.com/ubi10/ubi:latest"
     image_config:
-      conditions:
-        centos oscap datastream path:
-          shallow_merge:
-            default_oscap_datastream: /usr/share/xml/scap/ssg/content/ssg-cs10-ds.xml
-          when:
-            distro_name: centos
-        oracle default kernel should be kernel-core:
-          shallow_merge:
-            default_kernel: kernel-core
-          when:
-            distro_name: ol
-        oscap needs a different path on Oracle linux:
-          shallow_merge:
-            default_oscap_datastream: /usr/share/xml/scap/ssg/content/ssg-ol10-ds.xml
-          when:
-            distro_name: ol
       default:
-        default_kernel: kernel
-        default_oscap_datastream: /usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml
+        default_kernel: kernel-automotive
         install_weak_deps: true
         locale: C.UTF-8
         permissive_rhc: true
@@ -72,38 +22,15 @@ distros:
           no_zero_conf: true
         timezone: UTC
         update_default_kernel: true
-    iso_label_tmpl: RHEL-{{.Distro.MajorVersion}}-{{.Distro.MinorVersion}}-0-BaseOS-{{.Arch}}
-    match: rhivos-2\.[0-9]{1,2}
-    module_platform_id: platform:el10
-    name: rhivos-{{.MajorVersion}}.{{.MinorVersion}}
-    os_version: 2.{{.MinorVersion}}
-    oscap_profiles_allowlist:
-      - xccdf_org.ssgproject.content_profile_anssi_bp28_enhanced
-      - xccdf_org.ssgproject.content_profile_anssi_bp28_high
-      - xccdf_org.ssgproject.content_profile_anssi_bp28_intermediary
-      - xccdf_org.ssgproject.content_profile_anssi_bp28_minimal
-      - xccdf_org.ssgproject.content_profile_bsi
-      - xccdf_org.ssgproject.content_profile_cis
-      - xccdf_org.ssgproject.content_profile_cis_server_l1
-      - xccdf_org.ssgproject.content_profile_cis_workstation_l1
-      - xccdf_org.ssgproject.content_profile_cis_workstation_l2
-      - xccdf_org.ssgproject.content_profile_cui
-      - xccdf_org.ssgproject.content_profile_e8
-      - xccdf_org.ssgproject.content_profile_hipaa
-      - xccdf_org.ssgproject.content_profile_ism_o
-      - xccdf_org.ssgproject.content_profile_ism_o_secret
-      - xccdf_org.ssgproject.content_profile_ism_o_top_secret
-      - xccdf_org.ssgproject.content_profile_ospp
-      - xccdf_org.ssgproject.content_profile_pci-dss
-      - xccdf_org.ssgproject.content_profile_stig
-      - xccdf_org.ssgproject.content_profile_stig_gui
     product: Red Hat In-Vehicle Operating System
-    release_version: 2
     runner:
       build_packages:
         - glibc
-        - platform-python
         - systemd
         - python3
       name: org.osbuild.rhel{{.MajorVersion}}{{.MinorVersion}}
     vendor: redhat
+  - <<: *rhivos
+    name: rhivos-core-{{.MajorVersion}}.{{.MinorVersion}}
+    match: rhivos-core-2\.[0-9]{1,2}
+    defs_path: rhivos-core-2

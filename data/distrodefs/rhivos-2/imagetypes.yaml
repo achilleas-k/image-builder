@@ -1,6 +1,16 @@
 ---
 image_types:
   qcow2:
+    required_partition_sizes:
+      /: 1 GiB
+      /usr: 2 GiB
+    bootable: true
+    exports:
+      - qcow2
+    filename: disk.qcow2
+    image_func: disk
+    mime_type: application/x-qemu-disk
+    name_aliases: []
     blueprint:
       supported_options:
         - distro
@@ -32,11 +42,8 @@ image_types:
         - customizations.timezone
         - customizations.rhsm
         - customizations.sshd
-    bootable: true
+
     default_size: 10 GiB
-    exports:
-      - qcow2
-    filename: disk.qcow2
     image_config:
       default_kernel: kernel-automotive
       default_kernel_name: kernel-automotive
@@ -45,9 +52,6 @@ image_types:
         - chronyd
       kernel_options:
         - rd.modules-load=nvme,virtio_mmio
-    image_func: disk
-    mime_type: application/x-qemu-disk
-    name_aliases: []
     package_sets:
       os:
         - include:
@@ -85,8 +89,6 @@ image_types:
             - biosdevname
             - dnf-plugin-spacewalk
             - dracut-config-rescue
-            - fedora-release
-            - fedora-repos
             - firewalld
             - iprutils
             - ivtv-firmware
@@ -185,44 +187,3 @@ image_types:
             - shim-aa64
         qcow2_compat: '1.1'
         uefi_vendor: '{{.DistroVendor}}'
-    platforms_override:
-      conditions:
-        overriding supported platforms for oracle linux images:
-          override:
-            - arch: x86_64
-              bios_platform: i386-pc
-              bootloader: grub2
-              build_packages:
-                bios:
-                  - grub2-pc
-              image_format: qcow2
-              packages:
-                bios:
-                  - dracut-config-generic
-                  - grub2-pc
-                uefi:
-                  - dracut-config-generic
-                  - efibootmgr
-                  - grub2
-                  - grub2-efi-x64
-                  - shim-x64
-              qcow2_compat: '1.1'
-              uefi_vendor: '{{.DistroVendor}}'
-            - arch: aarch64
-              bootloader: grub2
-              image_format: qcow2
-              packages:
-                uefi:
-                  - dracut-config-generic
-                  - efibootmgr
-                  - grub2
-                  - grub2-efi-aa64
-                  - grub2-tools
-                  - shim-aa64
-              qcow2_compat: '1.1'
-              uefi_vendor: '{{.DistroVendor}}'
-          when:
-            distro_name: ol
-    required_partition_sizes:
-      /: 1 GiB
-      /usr: 2 GiB
