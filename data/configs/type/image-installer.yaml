@@ -7,7 +7,24 @@ exports: [bootiso]
 function: "image-installer"
 
 iso:
-  label: "Unkown"
+  label: "CentOS-Stream-10-BaseOS-x86_64"
+  rootfs:
+    type: "squashfs"
+    excludes:
+      - "boot/efi/.*"
+      - "boot/grub2/.*"
+      - "boot/config-.*"
+      - "boot/initramfs-.*"
+      - "boot/loader/.*"
+      - "boot/symvers-.*"
+      - "boot/System.map-.*"
+      - "usr/lib/sysimage/rpm/.*"
+      - "var/lib/rpm/.*"
+      - "var/lib/yum/.*"
+      - "var/lib/dnf/.*"
+  grub2:
+    default_menu_entry: 1
+  boot_type: "grub2"
 
 installer:
   anaconda:
@@ -222,14 +239,12 @@ content:
           - plymouth
 
 system:
-  kernel_options:
-    - console=tty1
-    - console=ttyS0,115200n8
-    - earlyprintk=ttyS0
-    - systemd.firstboot=off
   systemd:
-    default_target: "multi-user.target"
 
   time:
     ntp_servers:
     leapsectz: null
+
+  network:
+    enabled: true
+    no_zero_conf: true

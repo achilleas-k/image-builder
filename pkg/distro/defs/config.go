@@ -436,14 +436,15 @@ type SystemdDropinService struct {
 }
 
 type ISOConfig struct {
-	Label  string          `yaml:"label,omitempty"`
-	Rootfs ISORootfsConfig `yaml:"rootfs,omitempty"`
-	Grub2  Grub2Config     `yaml:"grub2,omitempty"`
+	Label    string                `yaml:"label,omitempty"`
+	Rootfs   ISORootfsConfig       `yaml:"rootfs,omitempty"`
+	BootType *manifest.ISOBootType `yaml:"boot_type,omitempty"`
+	Grub2    Grub2Config           `yaml:"grub2,omitempty"`
 }
 
 type ISORootfsConfig struct {
-	Type     string   `yaml:"type,omitempty"`
-	Excludes []string `yaml:"excludes,omitempty"`
+	Type     *manifest.ISORootfsType `yaml:"type,omitempty"`
+	Excludes []string                `yaml:"excludes,omitempty"`
 }
 
 type InstallerConfig struct {
@@ -555,6 +556,27 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 			LoraxTemplatePackage:    &config.Installer.Lorax.TemplatePackage,
 			LoraxLogosPackage:       &config.Installer.Lorax.LogosPackage,
 			LoraxReleasePackage:     &config.Installer.Lorax.ReleasePackage,
+		},
+		isoConfig: distro.ISOConfig{
+			BootType:       config.ISO.BootType,
+			RootfsType:     config.ISO.Rootfs.Type,
+			RootfsExcludes: config.ISO.Rootfs.Excludes,
+			ErofsOptions: &osbuild.ErofsStageOptions{
+				Filename:     "",
+				Source:       "",
+				ExcludePaths: []string{},
+				Compression: &osbuild.ErofsCompression{
+					Method: "",
+					Level:  nil,
+				},
+				ExtendedOptions: []string{},
+				ClusterSize:     nil,
+			},
+			Label:        nil,
+			Preparer:     nil,
+			Publisher:    nil,
+			Application:  nil,
+			ExcludePaths: []string{},
 		},
 
 		platform: bf.platform,
