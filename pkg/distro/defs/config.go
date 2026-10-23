@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
@@ -467,6 +468,7 @@ type KeyValue struct {
 }
 
 func Load(paths ...string) (BuildConfig, error) {
+	fmt.Println("--------------------------")
 	var config BuildConfig
 	for _, path := range paths {
 		fp, err := os.Open(filepath.Join("data/configs", path))
@@ -481,6 +483,12 @@ func Load(paths ...string) (BuildConfig, error) {
 		}
 	}
 
+	fmt.Println(strings.Join(paths, "\n"))
+	fmt.Println("Final package set name list")
+	for name := range config.Content.Packages.Sets {
+		fmt.Println(name)
+	}
+
 	return config, nil
 }
 
@@ -492,6 +500,10 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 
 	packageSets := make(map[string]rpmmd.PackageSet, len(config.Content.Packages.Sets))
 	for name, set := range config.Content.Packages.Sets {
+		if !slices.Contains([]string{"os", "installer"}, name) { // list of known package set names
+			name = "os" // rest goes to OS
+		}
+
 		packageSets[name] = rpmmd.PackageSet{
 			Include: slices.Clone(set.Include),
 			Exclude: slices.Clone(set.Exclude),
