@@ -23,6 +23,14 @@ installer:
     add_drivers:
       - "ipmi_devintf"
       - "ipmi_msghandler"
+  lorax:
+    logos_package: redhat-logos
+    release_package: redhat-release
+    template_package: lorax-templates-rhel
+    templates:
+      - path: 80-rhel/runtime-postinstall.tmpl
+      - path: 80-rhel/runtime-cleanup.tmpl
+        after_dracut: true
 
 content:
   packages:
@@ -221,3 +229,7 @@ system:
     - systemd.firstboot=off
   systemd:
     default_target: "multi-user.target"
+
+  time:
+    ntp_servers:
+    leapsectz: null

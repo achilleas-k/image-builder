@@ -11,6 +11,7 @@ import (
 	"github.com/osbuild/image-builder/pkg/datasizes"
 	"github.com/osbuild/image-builder/pkg/disk"
 	"github.com/osbuild/image-builder/pkg/distro"
+	"github.com/osbuild/image-builder/pkg/manifest"
 	"github.com/osbuild/image-builder/pkg/osbuild"
 	"github.com/osbuild/image-builder/pkg/platform"
 	"github.com/osbuild/image-builder/pkg/rpmmd"
@@ -188,6 +189,14 @@ func (dracuts Dracuts) stageOptions() []*osbuild.DracutConfStageOptions {
 	}
 
 	return options
+}
+
+type LoraxConfig struct {
+	TemplatePackage string                            `yaml:"template_package,omitempty"`
+	Templates       []manifest.InstallerLoraxTemplate `yaml:"templates,omitempty"`
+
+	LogosPackage   string `yaml:"logos_package,omitempty"`
+	ReleasePackage string `yaml:"release_package,omitempty"`
 }
 
 type KeyboardConfig struct {
@@ -440,6 +449,7 @@ type ISORootfsConfig struct {
 type InstallerConfig struct {
 	Anaconda AnacondaConfig `yaml:"anaconda,omitempty"`
 	Dracut   DracutConfig   `yaml:"dracut,omitempty"`
+	Lorax    LoraxConfig    `yaml:"lorax,omitempty"`
 }
 
 type AnacondaConfig struct {
@@ -541,6 +551,10 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 			AdditionalDracutModules: config.Installer.Dracut.AddModules,
 			AdditionalDrivers:       config.Installer.Dracut.AddDrivers,
 			DefaultMenu:             &config.ISO.Grub2.DefaultMenuEntry,
+			LoraxTemplates:          config.Installer.Lorax.Templates,
+			LoraxTemplatePackage:    &config.Installer.Lorax.TemplatePackage,
+			LoraxLogosPackage:       &config.Installer.Lorax.LogosPackage,
+			LoraxReleasePackage:     &config.Installer.Lorax.ReleasePackage,
 		},
 
 		platform: bf.platform,
