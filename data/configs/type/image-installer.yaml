@@ -50,9 +50,9 @@ installer:
         after_dracut: true
 
 content:
-  packages:
+  packages:  # TODO: should only describe OS / payload packages
     sets:
-      installer:
+      installer:  # TODO: move under installer!
         include:
           - "anaconda-dracut"
           - "curl"
