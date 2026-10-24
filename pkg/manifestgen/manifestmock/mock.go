@@ -156,7 +156,21 @@ func Depsolve(
 				len(pkgSet.Include)+len(pkgSet.Exclude)+len(pkgSet.Repositories)+1,
 			)
 
-			for _, pkgName := range pkgSet.Include {
+			dedupe := func(slc []string) []string {
+				u := make(map[string]bool)
+				for _, s := range slc {
+					u[s] = true
+				}
+				uslc := make([]string, 0, len(u))
+				for s := range u {
+					uslc = append(uslc, s)
+				}
+
+				return uslc
+			}
+
+			// TODO: make dedupes optional in the caller?
+			for _, pkgName := range dedupe(pkgSet.Include) {
 				// Generate a unique package checksum, so that the same included package name from different
 				// transactions are not considered the same package. This allows us to catch changes in the default
 				// package sets when generating test manifests.
@@ -195,7 +209,7 @@ func Depsolve(
 				transactionPackages = append(transactionPackages, pkg)
 			}
 
-			for _, pkgName := range pkgSet.Exclude {
+			for _, pkgName := range dedupe(pkgSet.Exclude) {
 				// Generate a unique package checksum, so that the same included package name from different
 				// transactions are not considered the same package. This allows us to catch changes in the default
 				// package sets when generating test manifests.
