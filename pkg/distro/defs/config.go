@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/osbuild/image-builder/internal/common"
 	"github.com/osbuild/image-builder/pkg/arch"
@@ -468,7 +467,7 @@ type KeyValue struct {
 }
 
 func Load(paths ...string) (BuildConfig, error) {
-	fmt.Println("--------------------------")
+	// fmt.Println("--------------------------")
 	var config BuildConfig
 	for _, path := range paths {
 		fp, err := os.Open(filepath.Join("data/configs", path))
@@ -483,11 +482,11 @@ func Load(paths ...string) (BuildConfig, error) {
 		}
 	}
 
-	fmt.Println(strings.Join(paths, "\n"))
-	fmt.Println("Final package set name list")
-	for name := range config.Content.Packages.Sets {
-		fmt.Println(name)
-	}
+	// fmt.Println(strings.Join(paths, "\n"))
+	// fmt.Println("Final package set name list")
+	// for name := range config.Content.Packages.Sets {
+	// 	fmt.Println(name)
+	// }
 
 	return config, nil
 }
