@@ -448,9 +448,10 @@ type ISORootfsConfig struct {
 }
 
 type InstallerConfig struct {
-	Anaconda AnacondaConfig `yaml:"anaconda,omitempty"`
-	Dracut   DracutConfig   `yaml:"dracut,omitempty"`
-	Lorax    LoraxConfig    `yaml:"lorax,omitempty"`
+	Anaconda        AnacondaConfig `yaml:"anaconda,omitempty"`
+	Dracut          DracutConfig   `yaml:"dracut,omitempty"`
+	Lorax           LoraxConfig    `yaml:"lorax,omitempty"`
+	InstallWeakDeps bool           `yaml:"install_weak_deps,omitempty"`
 }
 
 type AnacondaConfig struct {
@@ -496,18 +497,18 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 	bf := borrowFrom.(*imageType)
 
 	pt := disk.PartitionTable(config.PartitionTable.Architecture[config.Architecture])
-
 	packageSets := make(map[string]rpmmd.PackageSet, len(config.Content.Packages.Sets))
-	for name, set := range config.Content.Packages.Sets {
-		if !slices.Contains([]string{"os", "installer"}, name) { // list of known package set names
-			name = "os" // rest goes to OS
-		}
 
-		packageSets[name] = rpmmd.PackageSet{
-			Include: slices.Clone(set.Include),
-			Exclude: slices.Clone(set.Exclude),
-		}
+	packageSets["installer"] = config.Content.Packages.Sets["installer"]
+	delete(config.Content.Packages.Sets, "installer")
+
+	// the rest go to the OS
+	var osPkgSet rpmmd.PackageSet
+	for _, set := range config.Content.Packages.Sets {
+		osPkgSet.Include = append(osPkgSet.Include, slices.Clone(set.Include)...)
+		osPkgSet.Exclude = append(osPkgSet.Exclude, slices.Clone(set.Exclude)...)
 	}
+	packageSets["os"] = osPkgSet
 
 	var imageFunction imageFunc
 	switch config.FunctionName {
@@ -567,6 +568,7 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 			LoraxTemplatePackage:    &config.Installer.Lorax.TemplatePackage,
 			LoraxLogosPackage:       &config.Installer.Lorax.LogosPackage,
 			LoraxReleasePackage:     &config.Installer.Lorax.ReleasePackage,
+			InstallWeakDeps:         &config.Installer.InstallWeakDeps,
 		},
 		isoConfig: distro.ISOConfig{
 			BootType:       config.ISO.BootType,

@@ -23,3 +23,7 @@ system:
 content:
   packages:
     install_weak_deps: true
+    sets:
+      eula:
+        include:
+          - "redhat-release-eula"

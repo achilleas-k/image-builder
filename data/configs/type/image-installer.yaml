@@ -48,6 +48,7 @@ installer:
       - path: 80-rhel/runtime-postinstall.tmpl
       - path: 80-rhel/runtime-cleanup.tmpl
         after_dracut: true
+  install_weak_deps: true
 
 content:
   packages:  # TODO: should only describe OS / payload packages
@@ -220,6 +221,19 @@ content:
           - "biosdevname"
           - "dmidecode"
           - "memtest86+"
+
+          # anaconda boot x86_64
+          - "efibootmgr"
+          - "grub2-efi-x64"
+          - "grub2-efi-x64-cdboot"
+          - "grub2-pc"
+          - "grub2-pc-modules"
+          - "grub2-tools-efi"
+          - "shim-x64"
+          - "syslinux"
+          - "syslinux-nonlinux"
+
+          - "redhat-release-eula"
       os:
         include:
           - "@core"
@@ -256,12 +270,24 @@ content:
           - tar
           - tcpdump
           - tuned
+
+
+          # distro_build_pkgset
+          - "dnf"
+          - "dosfstools"
+          - "e2fsprogs"
+          - "glibc"
+          - "lvm2"
+          - "policycoreutils"
+          - "python3-iniparse"
+          - "qemu-img"
+          - "selinux-policy-targeted"
+          - "systemd"
+          - "tar"
+          - "xfsprogs"
+          - "xz"
         exclude:
           - dracut-config-rescue
-          - firewalld
-          - geolite2-city
-          - geolite2-country
-          - plymouth
 
 system:
   systemd:
