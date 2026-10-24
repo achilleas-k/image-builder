@@ -61,6 +61,18 @@ content:
         #   functionally speaking.  But they can also serve as a way to trace
         #   the source component of each set of packages.  Like tagging the
         #   origin of each package name that ends up in the OS or installer.
+        #   - It also makes it nicer to have named package sets that can be
+        #   overridden.  For example, imagine the distro-wide component defines
+        #   the default release package for all images in the distribution.  So
+        #   every image config that uses that gets a package set called
+        #   'release' in the 'content' block.  But if a specific image type
+        #   wants to override it, it can simply redefine the 'release' package
+        #   set inside the 'content' block, instead of adding it to the 'os'
+        #   package set.  This does mean that package set names become
+        #   meaningful, but the meaning is limited within the collection of
+        #   yaml components that define it.  The semantics of the package set
+        #   names does not leak from a collection of config components (yaml
+        #   files) into the pipeline generators (the "core logic" in code).
         include:
           - "anaconda-dracut"
           - "curl"
