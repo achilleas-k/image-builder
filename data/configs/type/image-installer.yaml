@@ -53,6 +53,14 @@ content:
   packages:  # TODO: should only describe OS / payload packages
     sets:
       installer:  # TODO: move under installer!
+        # NOTE: Moving installer packages under the installer section of the config gives us a few benefits:
+        #   - Package set names can be arbitrary.  No more magic strings!
+        #   - The location of the package set (content, installer, etc)
+        #   determines its purpose (pipeline).
+        #   - The package set names are there to aide in the merging of lists,
+        #   functionally speaking.  But they can also serve as a way to trace
+        #   the source component of each set of packages.  Like tagging the
+        #   origin of each package name that ends up in the OS or installer.
         include:
           - "anaconda-dracut"
           - "curl"
@@ -195,6 +203,11 @@ content:
           # pipeline.
           - "mdadm"
           - "nss-softokn"
+
+          # TODO: x86_64 only
+          - "biosdevname"
+          - "dmidecode"
+          - "memtest86+"
       os:
         include:
           - "@core"
