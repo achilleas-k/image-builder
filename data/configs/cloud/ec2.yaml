@@ -1,0 +1,10 @@
+---
+system:
+  time:
+    leapsectz: ""
+    ntp_servers:
+      - hostname: "169.254.169.123"
+        minpoll: 4
+        maxpoll: 4
+        iburst: true
+        prefer: true

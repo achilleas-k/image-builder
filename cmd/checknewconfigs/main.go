@@ -69,7 +69,7 @@ func main() {
 				"common/customizations-for-disk.yaml",
 				"common/cloud-init-services.yaml",
 				"common/vm-partition-tables.yaml",
-				"type/qcow2.yaml",
+				"type/fedora-qcow2.yaml",
 			},
 			distro:    "fedora-44",
 			arch:      "x86_64",
@@ -82,6 +82,7 @@ func main() {
 				"common/customizations-for-disk.yaml",
 				"common/cloud-init-services.yaml",
 				"common/vm-partition-tables.yaml",
+				// "cloud/ec2.yaml",  // this is probably a bug in our main definitions - the chrony settings aren't set for Fedora
 				"type/fedora-ami.yaml",
 			},
 			distro:    "fedora-44",
@@ -96,6 +97,7 @@ func main() {
 				"common/cloud-init-services.yaml",
 				"common/vm-noboot-pt.yaml",
 				"common/ec2-x86_64-dracut.yaml",
+				"cloud/ec2.yaml",
 				"type/el-ami.yaml",
 			},
 			distro:    "centos-10",
@@ -109,6 +111,7 @@ func main() {
 				"common/customizations-for-disk.yaml",
 				"common/cloud-init-services.yaml",
 				"common/vm-noboot-pt.yaml",
+				"cloud/ec2.yaml",
 				"type/el-ami.yaml",
 			},
 			distro:    "centos-10",
@@ -138,6 +141,18 @@ func main() {
 			distro:    "centos-10",
 			arch:      "aarch64",
 			imageType: "image-installer",
+		},
+		{
+			layers: []string{
+				"distro/centos-10.yaml",
+				"platform/x86_64-base.yaml",
+				"common/customizations-for-disk.yaml",
+				"common/vm-noboot-pt.yaml",
+				"type/el-qcow2.yaml",
+			},
+			distro:    "centos-10",
+			arch:      "x86_64",
+			imageType: "qcow2",
 		},
 	}
 

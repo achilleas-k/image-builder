@@ -9,16 +9,8 @@ system:
   locale: "C.UTF-8"
   default_kernel: "kernel"
   update_default_kernel: true
-
   time:
     timezone: "UTC"
-    leapsectz: ""
-    ntp_servers:
-      - hostname: "169.254.169.123"
-        minpoll: 4
-        maxpoll: 4
-        iburst: true
-        prefer: true
 
 content:
   packages:

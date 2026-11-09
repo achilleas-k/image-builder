@@ -1,0 +1,78 @@
+---
+names: [qcow2, guest-image]
+filename: disk.qcow2
+mime_type: application/x-qemu-disk
+bootable: true
+default_size: 10 GiB
+exports: [qcow2]
+
+content:
+  packages:
+    sets:
+      os:
+        include:
+          - "@core"
+          - chrony
+          - cloud-init
+          - cloud-utils-growpart
+          - cockpit-system
+          - cockpit-ws
+          - dnf-utils
+          - dosfstools
+          - nfs-utils
+          - oddjob
+          - oddjob-mkhomedir
+          - psmisc
+          - python3-jsonschema
+          - qemu-guest-agent
+          - redhat-release
+          - rsync
+          - system-reinstall-bootc
+          - tar
+          - tuned
+          - tcpdump
+        exclude:
+          - aic94xx-firmware
+          - alsa-firmware
+          - alsa-lib
+          - alsa-tools-firmware
+          - biosdevname
+          - dnf-plugin-spacewalk
+          - dracut-config-rescue
+          - fedora-release
+          - fedora-repos
+          - firewalld
+          - iprutils
+          - ivtv-firmware
+          - iwl1000-firmware
+          - iwl100-firmware
+          - iwl105-firmware
+          - iwl135-firmware
+          - iwl2000-firmware
+          - iwl2030-firmware
+          - iwl3160-firmware
+          - iwl3945-firmware
+          - iwl4965-firmware
+          - iwl5000-firmware
+          - iwl5150-firmware
+          - iwl6000-firmware
+          - iwl6000g2a-firmware
+          - iwl6000g2b-firmware
+          - iwl6050-firmware
+          - iwl7260-firmware
+          - langpacks-*
+          - langpacks-en
+          - libertas-sd8787-firmware
+          - plymouth
+          - rng-tools
+          - udisks2
+
+system:
+  kernel_options:
+    - console=tty0
+    - console=ttyS0,115200n8
+  systemd:
+    default_target: "multi-user.target"
+  network:
+    enabled: true
+    no_zero_conf: true

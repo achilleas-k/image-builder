@@ -5,7 +5,6 @@ partition_table:
     /usr: 2 GiB
   architecture:
     x86_64:
-      uuid: D209C89E-EA5E-4FBD-B161-B461CCE297E0
       type: gpt
       partitions:
         - size: 1 MiB
