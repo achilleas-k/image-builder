@@ -56,7 +56,6 @@ installer:
         include:
           - "anaconda-dracut"
           - "curl"
-          - "dracut-config-generic"
           - "dracut-network"
           - "hostname"
           - "iwl100-firmware"
@@ -196,21 +195,7 @@ installer:
           - "mdadm"
           - "nss-softokn"
 
-          # TODO: x86_64 only
-          - "biosdevname"
           - "dmidecode"
-          - "memtest86+"
-
-          # anaconda boot x86_64
-          - "efibootmgr"
-          - "grub2-efi-x64"
-          - "grub2-efi-x64-cdboot"
-          - "grub2-pc"
-          - "grub2-pc-modules"
-          - "grub2-tools-efi"
-          - "shim-x64"
-          - "syslinux"
-          - "syslinux-nonlinux"
 
           - "redhat-release-eula"
 
