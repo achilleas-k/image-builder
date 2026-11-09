@@ -1,0 +1,9 @@
+---
+architecture: "s390x"
+bootloader: "grub2"
+content:
+  packages:
+    sets:
+      bios:
+        include:
+          - "dracut-config-generic"

@@ -4,19 +4,8 @@ partitioning:
     /: 1 GiB
     /usr: 2 GiB
   partition_table:
-    uuid: '0x14fc63d2'
     type: dos
     partitions:
-      # boot
-      - size: 2 GiB
-        payload_type: filesystem
-        payload:
-          type: xfs
-          mountpoint: /boot
-          label: boot
-          fstab_options: defaults
-          fstab_freq: 0
-          fstab_passno: 0
       # root
       - bootable: true
         size: 2 GiB

@@ -178,6 +178,18 @@ func main() {
 			arch:      "ppc64le",
 			imageType: "qcow2",
 		},
+		{
+			layers: []string{
+				"distro/centos-10.yaml",
+				"platform/s390x-base.yaml",
+				"common/customizations-for-disk.yaml",
+				"common/vm-noboot-s390x-pt.yaml",
+				"type/el-qcow2.yaml",
+			},
+			distro:    "centos-10",
+			arch:      "s390x",
+			imageType: "qcow2",
+		},
 	}
 
 	for _, mapping := range configMappings {
