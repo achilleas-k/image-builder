@@ -50,30 +50,9 @@ installer:
         after_dracut: true
   install_weak_deps: true
 
-content:
-  packages:  # TODO: should only describe OS / payload packages
+  packages:
     sets:
-      installer:  # TODO: move under installer!
-        # NOTE: Moving installer packages under the installer section of the config gives us a few benefits:
-        #   - Package set names can be arbitrary.  No more magic strings!
-        #   - The location of the package set (content, installer, etc)
-        #   determines its purpose (pipeline).
-        #   - The package set names are there to aide in the merging of lists,
-        #   functionally speaking.  But they can also serve as a way to trace
-        #   the source component of each set of packages.  Like tagging the
-        #   origin of each package name that ends up in the OS or installer.
-        #   - It also makes it nicer to have named package sets that can be
-        #   overridden.  For example, imagine the distro-wide component defines
-        #   the default release package for all images in the distribution.  So
-        #   every image config that uses that gets a package set called
-        #   'release' in the 'content' block.  But if a specific image type
-        #   wants to override it, it can simply redefine the 'release' package
-        #   set inside the 'content' block, instead of adding it to the 'os'
-        #   package set.  This does mean that package set names become
-        #   meaningful, but the meaning is limited within the collection of
-        #   yaml components that define it.  The semantics of the package set
-        #   names does not leak from a collection of config components (yaml
-        #   files) into the pipeline generators (the "core logic" in code).
+      installer:
         include:
           - "anaconda-dracut"
           - "curl"
@@ -234,6 +213,10 @@ content:
           - "syslinux-nonlinux"
 
           - "redhat-release-eula"
+
+content:
+  packages:
+    sets:
       os:
         include:
           - "@core"

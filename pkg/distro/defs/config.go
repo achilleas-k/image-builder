@@ -452,6 +452,8 @@ type InstallerConfig struct {
 	Dracut          DracutConfig   `yaml:"dracut,omitempty"`
 	Lorax           LoraxConfig    `yaml:"lorax,omitempty"`
 	InstallWeakDeps bool           `yaml:"install_weak_deps,omitempty"`
+
+	Packages PackagesConfig `yaml:"packages,omitempty"`
 }
 
 type AnacondaConfig struct {
@@ -497,18 +499,20 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 	bf := borrowFrom.(*imageType)
 
 	pt := disk.PartitionTable(config.PartitionTable.Architecture[config.Architecture])
-	packageSets := make(map[string]rpmmd.PackageSet, len(config.Content.Packages.Sets))
+	packageSets := make(map[string]rpmmd.PackageSet, len(config.Content.Packages.Sets)+len(config.Installer.Packages.Sets))
 
-	packageSets["installer"] = config.Content.Packages.Sets["installer"]
-	delete(config.Content.Packages.Sets, "installer")
-
-	// the rest go to the OS
-	var osPkgSet rpmmd.PackageSet
+	var osPkgSet, installerPkgSet rpmmd.PackageSet
 	for _, set := range config.Content.Packages.Sets {
 		osPkgSet.Include = append(osPkgSet.Include, slices.Clone(set.Include)...)
 		osPkgSet.Exclude = append(osPkgSet.Exclude, slices.Clone(set.Exclude)...)
 	}
 	packageSets["os"] = osPkgSet
+
+	for _, set := range config.Installer.Packages.Sets {
+		installerPkgSet.Include = append(installerPkgSet.Include, slices.Clone(set.Include)...)
+		installerPkgSet.Exclude = append(installerPkgSet.Exclude, slices.Clone(set.Exclude)...)
+	}
+	packageSets["installer"] = installerPkgSet
 
 	var imageFunction imageFunc
 	switch config.FunctionName {
