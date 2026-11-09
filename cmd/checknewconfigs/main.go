@@ -166,6 +166,18 @@ func main() {
 			arch:      "aarch64",
 			imageType: "qcow2",
 		},
+		{
+			layers: []string{
+				"distro/centos-10.yaml",
+				"platform/ppc64le-base.yaml",
+				"common/customizations-for-disk.yaml",
+				"common/vm-noboot-pt.yaml",
+				"type/el-qcow2.yaml",
+			},
+			distro:    "centos-10",
+			arch:      "ppc64le",
+			imageType: "qcow2",
+		},
 	}
 
 	for _, mapping := range configMappings {
