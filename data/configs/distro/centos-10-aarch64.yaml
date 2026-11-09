@@ -1,0 +1,4 @@
+# Configuration unique to CentOS 10 on aarch64
+---
+iso:
+  label: "CentOS-Stream-10-BaseOS-aarch64"

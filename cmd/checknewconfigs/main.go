@@ -127,6 +127,18 @@ func main() {
 			arch:      "x86_64",
 			imageType: "image-installer",
 		},
+		{
+			layers: []string{
+				"distro/centos-10.yaml",
+				"distro/centos-10-aarch64.yaml",
+				"platform/aarch64-base.yaml",
+				"platform/aarch64-iso.yaml",
+				"type/image-installer.yaml",
+			},
+			distro:    "centos-10",
+			arch:      "aarch64",
+			imageType: "image-installer",
+		},
 	}
 
 	for _, mapping := range configMappings {

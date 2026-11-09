@@ -1,0 +1,16 @@
+---
+iso:
+  boot_type: "grub2-uefi"
+
+installer:
+  packages:
+    sets:
+      uefi:
+        include:
+          - "grub2-tools"
+          - "grub2-tools-extra"
+          - "grub2-tools-minimal"
+          - "efibootmgr"
+          - "grub2-efi-aa64-cdboot"
+          - "grub2-efi-aa64"
+          - "shim-aa64"
