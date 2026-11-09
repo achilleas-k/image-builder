@@ -171,7 +171,7 @@ func main() {
 				"distro/centos-10.yaml",
 				"platform/ppc64le-base.yaml",
 				"common/customizations-for-disk.yaml",
-				"common/vm-noboot-pt.yaml",
+				"common/vm-noboot-ppc64le-pt.yaml",
 				"type/el-qcow2.yaml",
 			},
 			distro:    "centos-10",

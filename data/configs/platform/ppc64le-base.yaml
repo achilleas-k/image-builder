@@ -1,0 +1,13 @@
+---
+architecture: "ppc64le"
+bootloader: "grub2"
+content:
+  packages:
+    sets:
+      bios:
+        include:
+          - "dracut-config-generic"
+          - "powerpc-utils"
+          - "grub2"
+          - "grub2-ppc64le"
+          - "grub2-ppc64le-modules"
