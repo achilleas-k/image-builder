@@ -19,18 +19,18 @@ import (
 )
 
 type BuildConfig struct {
-	Names          []string        `yaml:"names,omitempty"`
-	Filename       string          `yaml:"filename,omitempty"`
-	MIMEType       string          `yaml:"mime_type,omitempty"`
-	Bootable       bool            `yaml:"bootable,omitempty"`
-	DefaultSize    datasizes.Size  `yaml:"default_size,omitempty"`
-	Exports        []string        `yaml:"exports,omitempty"`
-	Blueprint      BlueprintConfig `yaml:"blueprint,omitempty"`
-	Content        ContentConfig   `yaml:"content,omitempty"`
-	System         SystemConfig    `yaml:"system,omitempty"`
-	ISO            ISOConfig       `yaml:"iso,omitempty"`
-	Installer      InstallerConfig `yaml:"installer,omitempty"`
-	PartitionTable PartitionTables `yaml:"partition_table,omitempty"`
+	Names        []string           `yaml:"names,omitempty"`
+	Filename     string             `yaml:"filename,omitempty"`
+	MIMEType     string             `yaml:"mime_type,omitempty"`
+	Bootable     bool               `yaml:"bootable,omitempty"`
+	DefaultSize  datasizes.Size     `yaml:"default_size,omitempty"`
+	Exports      []string           `yaml:"exports,omitempty"`
+	Blueprint    BlueprintConfig    `yaml:"blueprint,omitempty"`
+	Content      ContentConfig      `yaml:"content,omitempty"`
+	System       SystemConfig       `yaml:"system,omitempty"`
+	ISO          ISOConfig          `yaml:"iso,omitempty"`
+	Installer    InstallerConfig    `yaml:"installer,omitempty"`
+	Partitioning PartitioningConfig `yaml:"partitioning,omitempty"`
 
 	DistributionName string `yaml:"distribution_name"`
 	Depsolver        string `yaml:"depsolver"`
@@ -73,15 +73,9 @@ type SystemConfig struct {
 	Sshd                   SshdConfig       `yaml:"sshd,omitempty"`
 }
 
-type PartitionTables struct {
-	RequiredPartitionSizes map[string]datasizes.Size      `yaml:"required_partition_sizes,omitempty"`
-	Architecture           map[string]disk.PartitionTable `yaml:"architecture,omitempty"`
-}
-
-type PartitionTableConfig struct {
-	UUID       string      `yaml:"uuid,omitempty"`
-	Type       string      `yaml:"type,omitempty"`
-	Partitions []Partition `yaml:"partitions,omitempty"`
+type PartitioningConfig struct {
+	RequiredPartitionSizes map[string]datasizes.Size `yaml:"required_partition_sizes,omitempty"`
+	PartitionTable         disk.PartitionTable       `yaml:"partition_table,omitempty"`
 }
 
 type Partition struct {
@@ -498,7 +492,7 @@ func Load(paths ...string) (BuildConfig, error) {
 func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distro.ImageType, error) {
 	bf := borrowFrom.(*imageType)
 
-	pt := disk.PartitionTable(config.PartitionTable.Architecture[config.Architecture])
+	pt := config.Partitioning.PartitionTable
 	packageSets := make(map[string]rpmmd.PackageSet, len(config.Content.Packages.Sets)+len(config.Installer.Packages.Sets))
 
 	var osPkgSet, installerPkgSet rpmmd.PackageSet
@@ -534,7 +528,7 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 		bootable:               config.Bootable,
 		defaultSize:            config.DefaultSize,
 		exports:                config.Exports,
-		requiredPartitionSizes: config.PartitionTable.RequiredPartitionSizes,
+		requiredPartitionSizes: config.Partitioning.RequiredPartitionSizes,
 		partitionTable:         &pt,
 		isoLabel:               config.ISO.Label,
 		imageConfig: distro.ImageConfig{
@@ -663,11 +657,9 @@ func NewConfig(it *imageType) (BuildConfig, error) {
 				},
 			},
 		},
-		PartitionTable: PartitionTables{
+		Partitioning: PartitioningConfig{
 			RequiredPartitionSizes: it.requiredPartitionSizes,
-			Architecture: map[string]disk.PartitionTable{
-				it.arch.Name(): v(it.partitionTable),
-			},
+			PartitionTable:         v(it.partitionTable),
 		},
 		DistributionName: it.arch.distro.Name(),
 		Depsolver:        "osbuild-depsolve-dnf",

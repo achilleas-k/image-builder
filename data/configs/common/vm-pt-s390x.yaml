@@ -1,0 +1,27 @@
+---
+partitioning:
+  required_partition_sizes:
+    /: 1 GiB
+    /usr: 2 GiB
+  partition_table:
+    type: dos
+    uuid: '0x14fc63d2'
+    partitions:
+      - payload:
+          fstab_freq: 0
+          fstab_options: defaults
+          fstab_passno: 0
+          label: boot
+          mountpoint: /boot
+          type: ext4
+        payload_type: filesystem
+        size: 2 GiB
+      - bootable: true
+        payload:
+          fstab_freq: 0
+          fstab_options: defaults
+          fstab_passno: 0
+          mountpoint: /
+          type: ext4
+        payload_type: filesystem
+        size: 2 GiB
