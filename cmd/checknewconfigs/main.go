@@ -44,6 +44,9 @@ func save(data []byte, filename string) {
 }
 
 func compare(converted, orig manifest.OSBuildManifest, name string) {
+	savepath := filepath.Join(diffpath, name)
+	os.RemoveAll(savepath)
+
 	fmt.Printf("Checking %s: ", name)
 	if slices.Compare(converted, orig) == 0 {
 		fmt.Println("OK")
@@ -52,7 +55,6 @@ func compare(converted, orig manifest.OSBuildManifest, name string) {
 
 	fmt.Printf("DIFFER -> Saving to %s\n", diffpath)
 
-	savepath := filepath.Join(diffpath, name)
 	os.MkdirAll(savepath, 0700)
 	save(jsonMarshal(converted), filepath.Join(savepath, "new.json"))
 	save(jsonMarshal(orig), filepath.Join(savepath, "old.json"))
