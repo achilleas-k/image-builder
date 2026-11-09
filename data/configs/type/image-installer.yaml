@@ -7,7 +7,6 @@ exports: [bootiso]
 function: "image-installer"
 
 iso:
-  label: "CentOS-Stream-10-BaseOS-x86_64"
   rootfs:
     type: "squashfs"
     excludes:
@@ -24,7 +23,6 @@ iso:
       - "var/lib/dnf/.*"
   grub2:
     default_menu_entry: 1
-  boot_type: "grub2"
 
 installer:
   anaconda:

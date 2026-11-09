@@ -118,6 +118,7 @@ func main() {
 		{
 			layers: []string{
 				"distro/centos-10.yaml",
+				"distro/centos-10-x86_64.yaml",
 				"platform/x86_64-base.yaml",
 				"platform/x86_64-iso.yaml",
 				"type/image-installer.yaml",

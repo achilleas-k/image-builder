@@ -1,0 +1,4 @@
+# Configuration unique to CentOS 10 on x86_64
+---
+iso:
+  label: "CentOS-Stream-10-BaseOS-x86_64"

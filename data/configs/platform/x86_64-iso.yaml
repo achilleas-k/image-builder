@@ -1,4 +1,6 @@
 ---
+iso:
+  boot_type: "grub2"
 installer:
   packages:
     sets:
