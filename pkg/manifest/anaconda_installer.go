@@ -131,8 +131,7 @@ func NewAnacondaInstaller(installerType AnacondaInstallerType,
 	return p
 }
 
-// TODO: refactor - what is required to boot and what to build, and
-// do they all belong in this pipeline?
+// TODO: move into yaml bits - these don't belong here
 func (p *AnacondaInstaller) anacondaBootPackageSet() ([]string, error) {
 	var packages []string
 
