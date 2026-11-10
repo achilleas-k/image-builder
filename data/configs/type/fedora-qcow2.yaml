@@ -5,6 +5,7 @@ mime_type: application/x-qemu-disk
 bootable: true
 default_size: 5 GiB
 exports: [qcow2]
+function: disk
 
 content:
   packages:

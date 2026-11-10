@@ -515,7 +515,7 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 	case "image-installer":
 		imageFunction = imageInstallerImage
 	default:
-		imageFunction = diskImage
+		return nil, fmt.Errorf("unhandled image function name: %s", config.FunctionName)
 	}
 
 	// NOTE .stageOptions() methods are temporary, for serving this conversion only
