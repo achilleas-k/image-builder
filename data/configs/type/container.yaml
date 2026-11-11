@@ -1,0 +1,71 @@
+---
+names: ["ami"]
+filename: container.oci.tar
+mime_type: application/x-tar
+exports: [container]
+function: container
+bootable: false
+
+system:
+  locale: "C.UTF-8"
+  time:
+    timezone: "Etc/UTC"
+  rpm:
+    macros:
+      - filename: "/etc/rpm/macros.image-language-conf"
+        macros:
+          install_langs:
+            - "C.UTF-8"
+  security:
+    selinux:
+      disabled: true  # stupid option - use "policy" instead and empty option means disabled
+  network:
+    enabled: true
+    no_zero_conf: true
+
+
+content:
+  rpms:
+    options:
+      install_langs:
+        - "C.UTF-8"
+      install_weak_deps: false
+      exclude_docs: true
+    sets:
+      eula:  # we don't include the redhat-release-eula in the container. shouldn't we?
+        include:
+      os:
+        include:
+          - "bash"
+          - "coreutils-single"
+          - "crypto-policies-scripts"
+          - "curl-minimal"
+          - "findutils"
+          - "gdb-gdbserver"
+          - "glibc-minimal-langpack"
+          - "gzip"
+          - "python3-dnf-plugins-core"
+          - "redhat-release"
+          - "tar"
+          - "tzdata"
+          - "util-linux"
+          - "vim-minimal"
+          - "virt-what"
+          - "which"
+          - "yum"
+        exclude:
+          - "chrony"
+          - "coreutils"
+          - "coreutils-common"
+          - "cyrus-sasl-lib"
+          - "libbrotli"
+          - "libcurl"
+          - "libevent"
+          - "libpsl"
+          - "libssh"
+          - "libssh-config"
+          - "openldap"
+          - "libxkbcommon"
+          - "publicsuffix-list-dafsa"
+          - "rpm-plugin-audit"
+          - "xkeyboard-config"

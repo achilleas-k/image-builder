@@ -561,6 +561,8 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 		imageFunction = diskImage
 	case "image-installer":
 		imageFunction = imageInstallerImage
+	case "container":
+		imageFunction = containerImage
 	default:
 		return nil, fmt.Errorf("unhandled image function name: %s", config.FunctionName)
 	}

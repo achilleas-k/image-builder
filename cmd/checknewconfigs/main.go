@@ -190,6 +190,15 @@ func main() {
 			arch:      "s390x",
 			imageType: "qcow2",
 		},
+		{
+			layers: []string{
+				"distro/centos-10.yaml",
+				"type/container.yaml",
+			},
+			distro:    "centos-10",
+			arch:      "x86_64",
+			imageType: "container",
+		},
 	}
 
 	for _, mapping := range configMappings {
