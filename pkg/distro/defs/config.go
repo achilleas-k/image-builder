@@ -57,7 +57,9 @@ type RPMsConfig struct {
 }
 
 type RPMsOptionsConfig struct {
-	InstallWeakDeps bool `yaml:"install_weak_deps,omitempty"`
+	InstallWeakDeps bool     `yaml:"install_weak_deps,omitempty"`
+	InstallLangs    []string `yaml:"install_langs,omitempty"`
+	ExcludeDocs     bool     `yaml:"exclude_docs,omitempty"`
 }
 
 type SystemConfig struct {
@@ -75,6 +77,7 @@ type SystemConfig struct {
 	CloudInit           CloudInitConfigs `yaml:"cloud_init,omitempty"`
 	Sshd                SshdConfig       `yaml:"sshd,omitempty"`
 	Security            SecurityConfig   `yaml:"security,omitempty"`
+	RPM                 RPMConfig        `yaml:"rpm,omitempty"`
 }
 
 type PartitioningConfig struct {
@@ -382,12 +385,45 @@ func (cfg SshdConfig) stageOptions() *osbuild.SshdConfigStageOptions {
 	}
 }
 
+type RPMConfig struct {
+	Macros []RPMMacroFileConfig `yaml:"macros,omitempty"`
+}
+
+func (c RPMConfig) stageOptions() *distro.RPMConfig {
+	macros := make([]osbuild.RPMMacrosStageOptions, len(c.Macros))
+	for idx, macro := range c.Macros {
+		macros[idx] = osbuild.RPMMacrosStageOptions{
+			Filename: macro.Filename,
+			Macros: osbuild.RPMMacros{
+				InstallLangs: macro.Macros.InstallLange,
+			},
+		}
+	}
+	return &distro.RPMConfig{
+		Macros: macros,
+	}
+}
+
+type RPMMacroFileConfig struct {
+	Filename string          `yaml:"filename"`
+	Macros   RPMMacrosConfig `yaml:"macros,omitempty"`
+}
+
+type RPMMacrosConfig struct {
+	InstallLange []string `yaml:"install_langs,omitempty"`
+}
+
 type SecurityConfig struct {
 	Compliance ComplianceConfig `yaml:"compliance,omitempty"`
+	SELinux    SELinuxConfig    `yaml:"selinux,omitempty"`
 }
 
 type ComplianceConfig struct {
 	DefaultDatastream string `yaml:"default_datastream,omitempty"`
+}
+
+type SELinuxConfig struct {
+	Disabled bool `yaml:"disabled,omitempty"`
 }
 
 type SystemdDropins []SystemdDropin
@@ -554,6 +590,8 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 			DefaultTarget:          &config.System.Systemd.DefaultTarget,
 			MachineIdUninitialized: &config.System.Systemd.MachineIdUninitialized,
 			InstallWeakDeps:        &config.Content.RPMs.Options.InstallWeakDeps,
+			ExcludeDocs:            &config.Content.RPMs.Options.ExcludeDocs,
+			InstallLangs:           config.Content.RPMs.Options.InstallLangs,
 			DracutConf:             config.System.Init.Dracut.stageOptions(),
 			Keyboard:               config.System.Keyboard.stageOptions(),
 			Timezone:               &config.System.Time.Timezone,
@@ -567,6 +605,8 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 			CloudInit:     config.System.CloudInit.stageOptions(),
 			SshdConfig:    config.System.Sshd.stageOptions(),
 			SystemdDropin: config.System.Systemd.Dropins.stageOptions(),
+			NoSELinux:     &config.System.Security.SELinux.Disabled,
+			RPM:           config.System.RPM.stageOptions(),
 		},
 		installerConfig: distro.InstallerConfig{
 			EnabledAnacondaModules:  config.Installer.Anaconda.EnabledModules,
@@ -671,6 +711,9 @@ func NewConfig(it *imageType) (BuildConfig, error) {
 			Security: SecurityConfig{
 				Compliance: ComplianceConfig{
 					DefaultDatastream: v(it.imageConfig.DefaultOSCAPDatastream),
+				},
+				SELinux: SELinuxConfig{
+					Disabled: v(it.imageConfig.NoSELinux),
 				},
 			},
 		},
