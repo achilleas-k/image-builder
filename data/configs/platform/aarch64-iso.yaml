@@ -3,7 +3,7 @@ iso:
   boot_type: "grub2-uefi"
 
 installer:
-  packages:
+  rpms:
     sets:
       uefi:
         include:

@@ -2,7 +2,7 @@
 architecture: "aarch64"
 bootloader: "grub2"
 content:
-  packages:
+  rpms:
     sets:
       uefi:
         include:

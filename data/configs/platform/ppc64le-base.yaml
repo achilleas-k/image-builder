@@ -2,7 +2,7 @@
 architecture: "ppc64le"
 bootloader: "grub2"
 content:
-  packages:
+  rpms:
     sets:
       bios:
         include:

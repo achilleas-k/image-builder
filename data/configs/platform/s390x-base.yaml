@@ -2,7 +2,7 @@
 architecture: "s390x"
 bootloader: "grub2"
 content:
-  packages:
+  rpms:
     sets:
       bios:
         include:

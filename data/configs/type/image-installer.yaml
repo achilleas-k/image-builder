@@ -46,9 +46,10 @@ installer:
       - path: 80-rhel/runtime-postinstall.tmpl
       - path: 80-rhel/runtime-cleanup.tmpl
         after_dracut: true
-  install_weak_deps: true
 
-  packages:
+  rpms:
+    options:
+      install_weak_deps: true
     sets:
       installer:
         include:
@@ -198,7 +199,7 @@ installer:
           - "redhat-release-eula"
 
 content:
-  packages:
+  rpms:
     sets:
       os:
         include:

@@ -21,5 +21,6 @@ system:
     timezone: "UTC"
 
 content:
-  packages:
-    install_weak_deps: true
+  rpms:
+    options:
+      install_weak_deps: true

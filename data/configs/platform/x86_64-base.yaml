@@ -2,7 +2,7 @@
 architecture: "x86_64"
 bootloader: "grub2"
 content:
-  packages:
+  rpms:
     sets:
       uefi:
         include:

@@ -48,12 +48,16 @@ type BlueprintConfig struct {
 }
 
 type ContentConfig struct {
-	Packages PackagesConfig `yaml:"packages,omitempty"`
+	RPMs RPMsConfig `yaml:"rpms,omitempty"`
 }
 
-type PackagesConfig struct {
-	InstallWeakDeps bool                        `yaml:"install_weak_deps,omitempty"`
-	Sets            map[string]rpmmd.PackageSet `yaml:"sets,omitempty"`
+type RPMsConfig struct {
+	Options RPMsOptionsConfig           `yaml:"options,omitempty"`
+	Sets    map[string]rpmmd.PackageSet `yaml:"sets,omitempty"`
+}
+
+type RPMsOptionsConfig struct {
+	InstallWeakDeps bool `yaml:"install_weak_deps,omitempty"`
 }
 
 type SystemConfig struct {
@@ -450,12 +454,11 @@ type ISORootfsConfig struct {
 }
 
 type InstallerConfig struct {
-	Anaconda        AnacondaConfig `yaml:"anaconda,omitempty"`
-	Dracut          DracutConfig   `yaml:"dracut,omitempty"`
-	Lorax           LoraxConfig    `yaml:"lorax,omitempty"`
-	InstallWeakDeps bool           `yaml:"install_weak_deps,omitempty"`
+	Anaconda AnacondaConfig `yaml:"anaconda,omitempty"`
+	Dracut   DracutConfig   `yaml:"dracut,omitempty"`
+	Lorax    LoraxConfig    `yaml:"lorax,omitempty"`
 
-	Packages PackagesConfig `yaml:"packages,omitempty"`
+	RPMs RPMsConfig `yaml:"rpms,omitempty"`
 }
 
 type AnacondaConfig struct {
@@ -501,16 +504,16 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 	bf := borrowFrom.(*imageType)
 
 	pt := config.Partitioning.PartitionTable
-	packageSets := make(map[string]rpmmd.PackageSet, len(config.Content.Packages.Sets)+len(config.Installer.Packages.Sets))
+	packageSets := make(map[string]rpmmd.PackageSet, len(config.Content.RPMs.Sets)+len(config.Installer.RPMs.Sets))
 
 	var osPkgSet, installerPkgSet rpmmd.PackageSet
-	for _, set := range config.Content.Packages.Sets {
+	for _, set := range config.Content.RPMs.Sets {
 		osPkgSet.Include = append(osPkgSet.Include, slices.Clone(set.Include)...)
 		osPkgSet.Exclude = append(osPkgSet.Exclude, slices.Clone(set.Exclude)...)
 	}
 	packageSets["os"] = osPkgSet
 
-	for _, set := range config.Installer.Packages.Sets {
+	for _, set := range config.Installer.RPMs.Sets {
 		installerPkgSet.Include = append(installerPkgSet.Include, slices.Clone(set.Include)...)
 		installerPkgSet.Exclude = append(installerPkgSet.Exclude, slices.Clone(set.Exclude)...)
 	}
@@ -550,7 +553,7 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 			MaskedServices:         config.System.Systemd.Services.Mask,
 			DefaultTarget:          &config.System.Systemd.DefaultTarget,
 			MachineIdUninitialized: &config.System.Systemd.MachineIdUninitialized,
-			InstallWeakDeps:        &config.Content.Packages.InstallWeakDeps,
+			InstallWeakDeps:        &config.Content.RPMs.Options.InstallWeakDeps,
 			DracutConf:             config.System.Init.Dracut.stageOptions(),
 			Keyboard:               config.System.Keyboard.stageOptions(),
 			Timezone:               &config.System.Time.Timezone,
@@ -574,7 +577,7 @@ func ImageTypeFromConfig(config BuildConfig, borrowFrom distro.ImageType) (distr
 			LoraxTemplatePackage:    &config.Installer.Lorax.TemplatePackage,
 			LoraxLogosPackage:       &config.Installer.Lorax.LogosPackage,
 			LoraxReleasePackage:     &config.Installer.Lorax.ReleasePackage,
-			InstallWeakDeps:         &config.Installer.InstallWeakDeps,
+			InstallWeakDeps:         &config.Installer.RPMs.Options.InstallWeakDeps,
 		},
 		isoConfig: distro.ISOConfig{
 			BootType:       config.ISO.BootType,
@@ -640,9 +643,11 @@ func NewConfig(it *imageType) (BuildConfig, error) {
 			SupportedOptions: it.blueprint.SupportedOptions,
 		},
 		Content: ContentConfig{
-			Packages: PackagesConfig{
-				InstallWeakDeps: v(it.installWeakDeps),
-				Sets:            it.packageSets,
+			RPMs: RPMsConfig{
+				Sets: it.packageSets,
+				Options: RPMsOptionsConfig{
+					InstallWeakDeps: v(it.installWeakDeps),
+				},
 			},
 		},
 		System: SystemConfig{

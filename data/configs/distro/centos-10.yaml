@@ -15,8 +15,9 @@ system:
       default_datastream: "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
 
 content:
-  packages:
-    install_weak_deps: true
+  rpms:
+    options:
+      install_weak_deps: true
     sets:
       eula:
         include:
