@@ -57,20 +57,20 @@ type PackagesConfig struct {
 }
 
 type SystemConfig struct {
-	KernelOptions          []string         `yaml:"kernel_options,omitempty"`
-	DefaultOSCAPDatastream *string          `yaml:"default_oscap_datastream,omitempty"`
-	Locale                 string           `yaml:"locale,omitempty"`
-	DefaultKernel          string           `yaml:"default_kernel,omitempty"`
-	UpdateDefaultKernel    bool             `yaml:"update_default_kernel,omitempty"`
-	Hostname               string           `yaml:"hostname,omitempty"`
-	Systemd                SystemdConfig    `yaml:"systemd,omitempty"`
-	Init                   InitConfig       `yaml:"init,omitempty"`
-	Keyboard               KeyboardConfig   `yaml:"keyboard,omitempty"`
-	Time                   TimeConfig       `yaml:"time,omitempty"`
-	Modprobe               ModprobeConfigs  `yaml:"modprobe,omitempty"`
-	Network                NetworkConfig    `yaml:"network,omitempty"`
-	CloudInit              CloudInitConfigs `yaml:"cloud_init,omitempty"`
-	Sshd                   SshdConfig       `yaml:"sshd,omitempty"`
+	KernelOptions       []string         `yaml:"kernel_options,omitempty"`
+	Locale              string           `yaml:"locale,omitempty"`
+	DefaultKernel       string           `yaml:"default_kernel,omitempty"`
+	UpdateDefaultKernel bool             `yaml:"update_default_kernel,omitempty"`
+	Hostname            string           `yaml:"hostname,omitempty"`
+	Systemd             SystemdConfig    `yaml:"systemd,omitempty"`
+	Init                InitConfig       `yaml:"init,omitempty"`
+	Keyboard            KeyboardConfig   `yaml:"keyboard,omitempty"`
+	Time                TimeConfig       `yaml:"time,omitempty"`
+	Modprobe            ModprobeConfigs  `yaml:"modprobe,omitempty"`
+	Network             NetworkConfig    `yaml:"network,omitempty"`
+	CloudInit           CloudInitConfigs `yaml:"cloud_init,omitempty"`
+	Sshd                SshdConfig       `yaml:"sshd,omitempty"`
+	Security            SecurityConfig   `yaml:"security,omitempty"`
 }
 
 type PartitioningConfig struct {
@@ -378,6 +378,14 @@ func (cfg SshdConfig) stageOptions() *osbuild.SshdConfigStageOptions {
 	}
 }
 
+type SecurityConfig struct {
+	Compliance ComplianceConfig `yaml:"compliance,omitempty"`
+}
+
+type ComplianceConfig struct {
+	DefaultDatastream string `yaml:"default_datastream,omitempty"`
+}
+
 type SystemdDropins []SystemdDropin
 
 func (dropins SystemdDropins) stageOptions() []*osbuild.SystemdUnitStageOptions {
@@ -638,9 +646,8 @@ func NewConfig(it *imageType) (BuildConfig, error) {
 			},
 		},
 		System: SystemConfig{
-			KernelOptions:          it.imageConfig.KernelOptions,
-			DefaultOSCAPDatastream: it.imageConfig.DefaultOSCAPDatastream,
-			Locale:                 v(it.imageConfig.Locale),
+			KernelOptions: it.imageConfig.KernelOptions,
+			Locale:        v(it.imageConfig.Locale),
 			Time: TimeConfig{
 				Timezone: v(it.imageConfig.Timezone),
 			},
@@ -654,6 +661,11 @@ func NewConfig(it *imageType) (BuildConfig, error) {
 					Enable:  it.imageConfig.EnabledServices,
 					Disable: it.imageConfig.DisabledServices,
 					Mask:    it.imageConfig.MaskedServices,
+				},
+			},
+			Security: SecurityConfig{
+				Compliance: ComplianceConfig{
+					DefaultDatastream: v(it.imageConfig.DefaultOSCAPDatastream),
 				},
 			},
 		},

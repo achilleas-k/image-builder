@@ -5,12 +5,14 @@ package_manager: "rpm"
 uefi_vendor: "redhat"
 
 system:
-  default_oscap_datastream: "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
   locale: "C.UTF-8"
   default_kernel: "kernel"
   update_default_kernel: true
   time:
     timezone: "UTC"
+  security:
+    compliance:
+      default_datastream: "/usr/share/xml/scap/ssg/content/ssg-fedora-ds.xml"
 
 content:
   packages:
